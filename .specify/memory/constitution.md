@@ -1,55 +1,302 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+Version: 0.0.0 → 1.0.0 → 1.0.1
+Rationale:
+  - v1.0.0: 首次制定项目宪法，确立核心开发原则
+  - v1.0.1: 升级 Tailwind CSS 从 3.4.x 到 4.x
+Modified Principles: I. 技术栈锁定（Tailwind CSS 版本更新）
+Added Sections: 文档与沟通规范（v1.0.0 添加）
+Removed Sections: 无
+Templates Status: ✅ 兼容
+Follow-up TODOs: 无
+-->
 
-## Core Principles
+# AI Art Gallery 项目宪法
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+## 核心原则
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### I. 技术栈锁定（不可协商）
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+项目技术栈严格锁定以下版本和组合，禁止升级或引入额外框架：
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**核心框架与运行时**
+- **Node.js**: ≥ 18（唯一支持的运行时版本）
+- **React**: 18.2（禁止升级到 19 或其他版本）
+- **TypeScript**: 5.x（strict 模式强制启用）
+- **Vite**: 5.x（唯一构建工具）
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+**3D 渲染引擎**
+- **Three.js**: r160（精确版本，禁止升级）
+- **@react-three/fiber**: 8.x（React Three Fiber 版本）
+- **@react-three/drei**: 配套版本（与 fiber 8 兼容）
 
-### [PRINCIPLE_6_NAME]
+**状态管理**
+- **Zustand**: 4.x（唯一状态管理方案，禁止引入 Redux、MobX 等）
 
+**样式与 UI**
+- **Tailwind CSS**: 4.x
+- **Ant Design**: 6.0.x（唯一 UI 组件库）
+- **禁止**: 引入其他组件库（Material-UI、Chakra UI 等）或 CSS 预处理器（Sass、Less 等）
 
-[PRINCIPLE__DESCRIPTION]
+**理由**: 技术栈锁定确保项目稳定性、可维护性和团队一致性。版本升级需要经过正式的架构决策流程（ADR）。
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+---
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### II. 包管理与依赖规范（不可协商）
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**包管理器**
+- **唯一允许**: pnpm
+- **禁止**: npm、yarn、bun
+- **强制要求**: 必须提交 `pnpm-lock.yaml` 到版本控制
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**依赖安装原则**
+- 所有依赖安装必须使用 `pnpm install`
+- 禁止直接使用 `npm install` 或 `yarn install`
+- CI/CD 流程必须使用 pnpm
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+**理由**: pnpm 提供严格的依赖管理、磁盘空间效率和最快的安装速度。锁定文件确保团队环境一致性。
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+---
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### III. 代码规范与质量标准（不可协商）
+
+**TypeScript 配置**
+- `strict: true` 必须启用
+- 禁止使用 `@ts-ignore`（除非有明确的 ADR 批准）
+- 所有函数必须有明确的类型注解
+
+**代码格式化**
+- **ESLint**: 必须配置并启用
+- **Prettier**: 必须配置并启用
+- **强制要求**: 执行 `pnpm run lint:fix` 必须 0 错误
+- 提交前必须通过 lint 检查
+
+**代码审查标准**
+- 所有 PR 必须通过 ESLint 检查
+- 任何 TypeScript 类型错误禁止合并
+- 代码必须符合 Prettier 格式化规则
+
+**文档与沟通规范**
+- **强制要求**: 所有项目文档必须使用中文编写
+- **适用范围**:
+  - 所有 `.md` 文档（README、规格说明、计划、任务等）
+  - 代码注释和 JSDoc
+  - Git 提交信息
+  - PR 描述和审查评论
+  - ADR（架构决策记录）
+  - PHR（Prompt History Record）
+- **代码标识符**: 变量名、函数名、类名等仍使用英文（遵循行业标准）
+- **例外**: 技术术语、API 名称、命令行参数等保留英文原文
+
+**理由**: 统一使用中文确保团队沟通效率，降低理解成本。代码标识符使用英文符合国际化最佳实践和生态标准。
+
+---
+
+### IV. 3D 性能红线（不可协商）
+
+**模型文件限制**
+- 单个 glb/gltf 文件大小 ≤ 5 MB
+- 超过限制的模型必须：
+  - 使用 Draco 压缩（必须启用）
+  - 或托管到 CDN 并提供加载进度提示
+
+**渲染性能限制**
+- **Draw Call**: ≤ 100（每帧）
+- **帧率**: 锁定 60 FPS
+- **几何体**: 合并相同材质的网格
+- **纹理**: 使用适当分辨率（最大 2048x2048，除非有明确理由）
+
+**性能监控**
+- 开发环境必须显示 FPS 监控
+- 生产环境必须包含性能指标收集
+- 加载时间必须显示进度条（超过 2 秒）
+
+**违规处理**
+- 违反任何性能红线必须通过 ADR 论证
+- 必须提供性能测试数据支持例外请求
+
+**理由**: 3D 性能直接影响用户体验。严格的性能限制确保在各种设备上流畅运行。
+
+---
+
+### V. 项目结构与目录约束（不可协商）
+
+**强制目录结构**
+`src/` 目录下只允许以下子目录：
+- `components/` - React 组件
+- `pages/` - 页面组件
+- `stores/` - Zustand 状态管理
+- `hooks/` - 自定义 React Hooks
+- `utils/` - 工具函数
+- `libs/` - 第三方库封装
+- `assets/` - 静态资源（图片、字体等）
+- `styles/` - 全局样式文件
+
+**禁止行为**
+- 不得在 `src/` 下新增额外文件夹
+- 不得创建不在上述列表中的目录
+- 特殊情况需要通过 ADR 论证
+
+**构建输出**
+- 输出目录: `dist/`
+- Base 路径: `/`
+- 静态资源: 放置在 `public/` 目录
+
+**理由**: 统一的目录结构降低认知负担，提高代码可读性和团队协作效率。
+
+---
+
+### VI. 构建与部署规范（不可协商）
+
+**构建工具配置**
+- **唯一构建工具**: Vite 5
+- **输出目录**: `dist/`
+- **Base 路径**: `/`（根路径）
+- **静态资源**: `public/` 目录
+
+**构建要求**
+- 生产构建必须通过 `pnpm run build`
+- 构建输出不得包含警告（除非有 ADR 批准）
+- 构建产物必须优化（压缩、tree-shaking）
+
+**部署范围**
+- **纯前端演示项目**
+- **禁止**: SSR（服务端渲染）
+- **禁止**: 后端服务集成
+- **禁止**: CSP（内容安全策略）配置
+- **禁止**: 审计日志系统
+- **运行环境**: 仅浏览器本地环境
+
+**理由**: 简化部署流程，聚焦前端展示能力，避免不必要的后端复杂度。
+
+---
+
+### VII. 依赖引入与扩展原则（不可协商）
+
+**禁止行为**
+- 引入技术栈锁定列表之外的框架
+- 升级已锁定版本的依赖
+- 添加功能重复的库（如已有 lodash，不再引入 underscore）
+- 引入未经 ADR 批准的大型依赖（> 100KB minified）
+
+**允许行为**
+- 引入小型工具库（< 50KB）用于特定功能
+- 升级安全补丁（需更新 lock file）
+- 开发依赖可灵活调整（测试工具、构建插件）
+
+**评估标准**
+新依赖必须满足：
+1. 解决明确的问题
+2. 没有更轻量的替代方案
+3. 维护活跃（最近 6 个月有更新）
+4. TypeScript 支持良好
+
+**理由**: 控制依赖膨胀，减少安全风险，保持项目轻量和可维护。
+
+---
+
+## 项目范围定义
+
+### 在范围内
+- 3D 艺术品展示与浏览
+- 基于 WebGL 的交互式体验
+- 本地浏览器环境运行
+- 单页应用（SPA）架构
+- 客户端状态管理与路由
+
+### 不在范围内
+- 用户认证与授权系统
+- 后端 API 与数据库
+- SSR（服务端渲染）
+- 服务端日志与审计
+- 内容安全策略（CSP）
+- 多人协作功能
+- 支付与交易系统
+
+---
+
+## 开发流程规范
+
+### 分支管理
+- 主分支: `master` 或 `main`
+- 功能分支: `[###-feature-name]` 格式
+- 修复分支: `[###-bugfix-name]` 格式
+
+### 提交规范
+- 提交信息必须清晰描述变更
+- 禁止提交 lint 错误
+- 必须包含 TypeScript 类型检查通过
+- 大型功能需要配套的 ADR
+
+### 代码审查
+- 所有代码变更必须经过审查
+- 审查清单：
+  - [ ] 符合技术栈锁定原则
+  - [ ] 通过 ESLint 和 Prettier 检查
+  - [ ] TypeScript strict 模式无错误
+  - [ ] 3D 性能指标符合红线
+  - [ ] 目录结构符合约束
+  - [ ] 依赖引入符合规范
+
+---
+
+## 质量保证
+
+### 测试策略
+- 单元测试：针对核心工具函数和 hooks
+- 集成测试：针对关键用户流程
+- 性能测试：3D 场景必须达到 60 FPS
+- 视觉回归测试：UI 组件变更需验证
+
+### 性能监控
+- 开发环境：实时 FPS 显示
+- 生产环境：关键性能指标收集
+- 加载性能：首屏加载 < 3 秒
+- 3D 渲染：帧率稳定在 60 FPS
+
+### 错误处理
+- 所有异步操作必须包含错误处理
+- 用户友好的错误提示
+- 开发环境详细错误日志
+- 生产环境简化错误输出
+
+---
+
+## 治理原则
+
+### 宪法修订流程
+1. 提出修订建议（通过 issue 或 PR）
+2. 团队讨论与评审
+3. 更新宪法版本号
+4. 同步更新所有相关模板和文档
+5. 通知所有团队成员
+
+### 版本控制
+- 遵循语义化版本（Semantic Versioning）
+- **MAJOR**: 移除或重新定义核心原则（向后不兼容）
+- **MINOR**: 新增原则或大幅扩展指导内容
+- **PATCH**: 澄清、措辞优化、非语义性修正
+
+### 合规性审查
+- 所有 PR 必须验证是否符合宪法原则
+- 复杂度引入必须提供正当理由
+- 违反宪法原则需要通过 ADR 论证
+- 审查未通过禁止合并
+
+### 架构决策记录（ADR）
+- 重大架构决策必须创建 ADR
+- ADR 必须：
+  - 说明决策背景和问题
+  - 列出考虑的替代方案
+  - 评估权衡和利弊
+  - 提供决策依据
+- ADR 存储在 `history/adr/` 目录
+
+### 指导文件
+- 运行时开发指导参考：`CLAUDE.md`
+- 模板和脚本位于：`.specify/`
+- Prompt History Records 位于：`history/prompts/`
+
+---
+
+**版本**: 1.0.1 | **批准日期**: 2026-01-18 | **最后修订**: 2026-01-18
