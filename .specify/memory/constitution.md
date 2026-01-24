@@ -1,10 +1,13 @@
 <!--
 Sync Impact Report:
-Version: 0.0.0 → 1.0.0 → 1.0.1
+Version: 0.0.0 → 1.0.0 → 1.0.1 → 1.1.0
 Rationale:
   - v1.0.0: 首次制定项目宪法，确立核心开发原则
   - v1.0.1: 升级 Tailwind CSS 从 3.4.x 到 4.x
-Modified Principles: I. 技术栈锁定（Tailwind CSS 版本更新）
+  - v1.1.0: 状态管理方案从 Zustand 改为 Redux Toolkit（采用最流行方案）
+Modified Principles:
+  - v1.0.1: I. 技术栈锁定（Tailwind CSS 版本更新）
+  - v1.1.0: I. 技术栈锁定（状态管理从 Zustand 改为 Redux Toolkit）
 Added Sections: 文档与沟通规范（v1.0.0 添加）
 Removed Sections: 无
 Templates Status: ✅ 兼容
@@ -31,7 +34,9 @@ Follow-up TODOs: 无
 - **@react-three/drei**: 配套版本（与 fiber 8 兼容）
 
 **状态管理**
-- **Zustand**: 4.x（唯一状态管理方案，禁止引入 Redux、MobX 等）
+- **Redux Toolkit**: 最新稳定版（唯一状态管理方案，禁止引入 Zustand、MobX 等）
+- **配套**: RTK Query（服务端状态管理，异步数据获取）
+- **禁止**: 引入其他状态管理库（Context API 除外，用于局部组件状态）
 
 **样式与 UI**
 - **Tailwind CSS**: 4.x
@@ -299,4 +304,4 @@ Follow-up TODOs: 无
 
 ---
 
-**版本**: 1.0.1 | **批准日期**: 2026-01-18 | **最后修订**: 2026-01-18
+**版本**: 1.1.0 | **批准日期**: 2026-01-18 | **最后修订**: 2026-01-24
