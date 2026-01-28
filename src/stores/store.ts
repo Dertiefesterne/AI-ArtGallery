@@ -1,5 +1,16 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore, createSlice } from '@reduxjs/toolkit'
 // import { setupListeners } from '@reduxjs/toolkit/query'
+
+// 临时 reducer - 后续会添加真正的 slices
+const tempSlice = createSlice({
+  name: 'temp',
+  initialState: { value: 0 },
+  reducers: {
+    increment: state => {
+      state.value += 1
+    },
+  },
+})
 
 // 这里后续会添加 slices 和 API
 // import { artGalleryApi } from './services/artGalleryApi'
@@ -7,6 +18,7 @@ import { configureStore } from '@reduxjs/toolkit'
 
 export const store = configureStore({
   reducer: {
+    temp: tempSlice.reducer,
     // 这里后续会添加 reducers
     // artGalleryApi: artGalleryApi.reducer,
     // ui: uiReducer,
