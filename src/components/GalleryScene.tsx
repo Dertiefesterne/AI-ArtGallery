@@ -1,9 +1,17 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera, Environment, ContactShadows } from '@react-three/drei'
+import { OrbitControls, PerspectiveCamera, Environment } from '@react-three/drei'
 import { Suspense } from 'react'
+import { Room } from './Room'
+import { Artwork } from './Artwork'
 
 /**
  * 画廊 3D 场景组件
+ *
+ * 设计：
+ * - L型画廊（两面墙成90度）
+ * - 6幅画作（每面墙3幅）
+ * - 古典欧式金色画框
+ * - 顶部环境照明
  *
  * 性能要求：
  * - 帧率锁定 60 FPS
@@ -14,22 +22,42 @@ export function GalleryScene() {
   return (
     <div className="w-full h-screen">
       <Canvas
-        dpr={[1, 2]} // 像素比，限制在 1-2 之间以优化性能
+        dpr={[1, 2]}
         gl={{
           antialias: true,
           alpha: true,
           powerPreference: 'high-performance',
         }}
-        performance={{ min: 0.5 }} // 性能降级阈值
+        performance={{ min: 0.5 }}
+        shadows
       >
         <Suspense fallback={null}>
-          {/* 相机设置 */}
-          <PerspectiveCamera makeDefault position={[0, 2, 5]} fov={50} />
+          {/* 相机设置 - 第一人称视角 */}
+          <PerspectiveCamera makeDefault position={[0, 1.6, 12]} fov={90} />
 
           {/* 环境光和阴影 */}
-          <Environment preset="city" />
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
+          <Environment preset="apartment" />
+          <ambientLight intensity={0.4} />
+
+          {/* 顶部环境光 - 柔和的整体照明 */}
+          <directionalLight
+            position={[0, 10, 0]}
+            intensity={0.8}
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-camera-far={20}
+            shadow-camera-left={-10}
+            shadow-camera-right={10}
+            shadow-camera-top={10}
+            shadow-camera-bottom={-10}
+            shadow-bias={-0.0001}
+            shadow-normalBias={0.02}
+          />
+
+          {/* 补充光源 */}
+          <pointLight position={[5, 4, 5]} intensity={0.3} />
+          <pointLight position={[-5, 4, -5]} intensity={0.3} />
 
           {/* 相机控制 */}
           <OrbitControls
@@ -37,20 +65,28 @@ export function GalleryScene() {
             enablePan={true}
             enableZoom={true}
             enableRotate={true}
-            minDistance={2}
-            maxDistance={10}
+            minDistance={5}
+            maxDistance={30}
             maxPolarAngle={Math.PI / 2}
+            minPolarAngle={0}
+            target={[0, 3, -10]}
           />
 
-          {/* 接触阴影 */}
-          <ContactShadows position={[0, -0.5, 0]} opacity={0.6} scale={20} blur={2} far={10} />
+          {/* 画廊房间 */}
+          <Room />
 
-          {/* 这里后续会添加画廊场景、画作、灯光等 */}
-          {/* 示例：一个简单的地面 */}
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-            <planeGeometry args={[20, 20]} />
-            <meshStandardMaterial color="#1f2937" />
-          </mesh>
+          {/* 左墙（X=-6）：3幅画，面向右侧（走廊内部） */}
+          <Artwork position={[-5.92, 3, -6]} rotation={[0, Math.PI / 2, 0]} />
+          <Artwork position={[-5.92, 3, 0]} rotation={[0, Math.PI / 2, 0]} />
+          <Artwork position={[-5.92, 3, 6]} rotation={[0, Math.PI / 2, 0]} />
+
+          {/* 右墙（X=6）：3幅画，面向左侧（走廊内部） */}
+          <Artwork position={[5.92, 3, -6]} rotation={[0, -Math.PI / 2, 0]} />
+          <Artwork position={[5.92, 3, 0]} rotation={[0, -Math.PI / 2, 0]} />
+          <Artwork position={[5.92, 3, 6]} rotation={[0, -Math.PI / 2, 0]} />
+
+          {/* 走廊尽头墙（Z=-10）：1幅画，面向前方（走廊入口） */}
+          <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} />
         </Suspense>
       </Canvas>
     </div>
