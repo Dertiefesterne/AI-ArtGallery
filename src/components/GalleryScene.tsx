@@ -1,24 +1,29 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera, Environment } from '@react-three/drei'
 import { Suspense } from 'react'
+import { useSelector } from 'react-redux'
 import { Room } from './Room'
 import { Artwork } from './Artwork'
+import type { RootState } from '@/stores/store'
 
 /**
  * 画廊 3D 场景组件
  *
  * 设计：
- * - L型画廊（两面墙成90度）
- * - 6幅画作（每面墙3幅）
+ * - 竖直走廊画廊（12×20×8米）
+ * - 7幅画作（左墙3幅+右墙3幅+尽头墙1幅）
  * - 古典欧式金色画框
  * - 顶部环境照明
- *
- * 性能要求：
- * - 帧率锁定 60 FPS
- * - Draw calls ≤ 100
- * - 模型文件 ≤ 5 MB（使用 Draco 压缩）
+ * - 动态显示生成的图片
  */
 export function GalleryScene() {
+  // 从 Redux 获取已成功生成的图片（最多 7 张）
+  const generatedImages = useSelector((state: RootState) =>
+    state.images.history
+      .filter((item) => item.status === 'success' && item.imageUrl)
+      .slice(0, 7)
+      .map((item) => item.imageUrl!)
+  )
   return (
     <div className="w-full h-screen">
       <Canvas
@@ -76,17 +81,17 @@ export function GalleryScene() {
           <Room />
 
           {/* 左墙（X=-6）：3幅画，面向右侧（走廊内部） */}
-          <Artwork position={[-5.92, 3, -6]} rotation={[0, Math.PI / 2, 0]} />
-          <Artwork position={[-5.92, 3, 0]} rotation={[0, Math.PI / 2, 0]} />
-          <Artwork position={[-5.92, 3, 6]} rotation={[0, Math.PI / 2, 0]} />
+          <Artwork position={[-5.92, 3, -6]} rotation={[0, Math.PI / 2, 0]} imageUrl={generatedImages[0]} />
+          <Artwork position={[-5.92, 3, 0]} rotation={[0, Math.PI / 2, 0]} imageUrl={generatedImages[1]} />
+          <Artwork position={[-5.92, 3, 6]} rotation={[0, Math.PI / 2, 0]} imageUrl={generatedImages[2]} />
 
           {/* 右墙（X=6）：3幅画，面向左侧（走廊内部） */}
-          <Artwork position={[5.92, 3, -6]} rotation={[0, -Math.PI / 2, 0]} />
-          <Artwork position={[5.92, 3, 0]} rotation={[0, -Math.PI / 2, 0]} />
-          <Artwork position={[5.92, 3, 6]} rotation={[0, -Math.PI / 2, 0]} />
+          <Artwork position={[5.92, 3, -6]} rotation={[0, -Math.PI / 2, 0]} imageUrl={generatedImages[3]} />
+          <Artwork position={[5.92, 3, 0]} rotation={[0, -Math.PI / 2, 0]} imageUrl={generatedImages[4]} />
+          <Artwork position={[5.92, 3, 6]} rotation={[0, -Math.PI / 2, 0]} imageUrl={generatedImages[5]} />
 
           {/* 走廊尽头墙（Z=-10）：1幅画，面向前方（走廊入口） */}
-          <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} />
+          <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} imageUrl={generatedImages[6]} />
         </Suspense>
       </Canvas>
     </div>

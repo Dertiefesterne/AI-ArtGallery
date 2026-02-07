@@ -1,9 +1,11 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import * as THREE from 'three'
+import { useTexture } from '@react-three/drei'
 
 interface ArtworkProps {
   position: [number, number, number]
   rotation: [number, number, number]
+  imageUrl?: string  // 可选的图片 URL
 }
 
 /**
@@ -14,10 +16,21 @@ interface ArtworkProps {
  * - 画框尺寸：高2米，宽1.5米
  * - 画框宽度：8cm
  * - 画框带有装饰性纹理
- * - 画作内容：使用占位图片
+ * - 画作内容：支持动态图片或占位色块
  */
-export function Artwork({ position, rotation }: ArtworkProps) {
+export function Artwork({ position, rotation, imageUrl }: ArtworkProps) {
   const groupRef = useRef<THREE.Group>(null)
+  const [textureError, setTextureError] = useState(false)
+
+  // 加载纹理
+  let texture = null
+  try {
+    if (imageUrl && !textureError) {
+      texture = useTexture(imageUrl)
+    }
+  } catch (error) {
+    setTextureError(true)
+  }
 
   // 画框材质 - 古典金色
   const frameMaterial = (
@@ -69,13 +82,20 @@ export function Artwork({ position, rotation }: ArtworkProps) {
       {/* 占位画作内容 */}
       <mesh position={[0, 0, 0.11]}>
         <boxGeometry args={[1.3, 1.8, 0.03]} />
-        <meshStandardMaterial
-          color="#4a5568"
-          roughness={0.8}
-          polygonOffset={true}
-          polygonOffsetFactor={1}
-          polygonOffsetUnits={1}
-        />
+        {texture && !textureError ? (
+          <meshStandardMaterial
+            map={texture}
+            roughness={0.8}
+          />
+        ) : (
+          <meshStandardMaterial
+            color="#4a5568"
+            roughness={0.8}
+            polygonOffset={true}
+            polygonOffsetFactor={1}
+            polygonOffsetUnits={1}
+          />
+        )}
       </mesh>
 
       {/* 画框顶部装饰 */}

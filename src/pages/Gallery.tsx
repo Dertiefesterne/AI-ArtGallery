@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Drawer, Input, Select, Space, Card, Badge, Slider, Switch } from 'antd'
+import { Button, Drawer, Input, Select, Space, Card, Badge, Slider, Switch, message } from 'antd'
 import {
   PictureOutlined,
   HistoryOutlined,
@@ -12,6 +12,8 @@ import {
 import { GalleryScene } from '@/components/GalleryScene'
 import { HistoryModal } from '@/components/HistoryModal'
 import { QueueDrawer } from '@/components/QueueDrawer'
+import { useImageGeneration } from '@/hooks/useImageGeneration'
+import { STYLE_PRESETS } from '@/services/imageGen'
 import './Gallery.css'
 
 const { TextArea } = Input
@@ -27,10 +29,13 @@ const { TextArea } = Input
  * 5. 生成历史（Modal）
  */
 export function Gallery() {
+  // 使用图片生成 Hook
+  const { queue, history, submitGeneration } = useImageGeneration()
+
   // AI 生成面板状态
   const [generatePanelOpen, setGeneratePanelOpen] = useState(false)
   const [prompt, setPrompt] = useState('')
-  const [selectedStyle, setSelectedStyle] = useState<string>('oil-painting')
+  const [selectedStyle, setSelectedStyle] = useState<string>('realistic')
 
   // 环境设置状态
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
@@ -42,22 +47,36 @@ export function Gallery() {
 
   // 生成队列状态
   const [queueDrawerOpen, setQueueDrawerOpen] = useState(false)
-  const queueCount = 3
 
-  // 艺术风格选项
+  // 艺术风格选项（从 STYLE_PRESETS 生成）
   const styleOptions = [
-    { label: '油画风格', value: 'oil-painting' },
-    { label: '水彩画', value: 'watercolor' },
-    { label: '像素艺术', value: 'pixel-art' },
-    { label: '素描', value: 'sketch' },
-    { label: '印象派', value: 'impressionism' },
+    { label: '写实风格', value: 'realistic' },
     { label: '赛博朋克', value: 'cyberpunk' },
+    { label: '水彩画', value: 'watercolor' },
+    { label: '油画', value: 'oilPainting' },
+    { label: '素描', value: 'sketch' },
+    { label: '动漫', value: 'anime' },
+    { label: '抽象', value: 'abstract' },
+    { label: '印象派', value: 'impressionism' },
   ]
 
   // 生成作品
   const handleGenerate = () => {
-    console.log('生成作品:', { prompt, style: selectedStyle })
-    // TODO: 调用 AI 生成 API
+    if (!prompt.trim()) {
+      message.warning('请输入图片描述')
+      return
+    }
+
+    const styleLabel = styleOptions.find(s => s.value === selectedStyle)?.label || selectedStyle
+
+    submitGeneration({
+      prompt: prompt.trim(),
+      style: selectedStyle,
+      styleLabel,
+    })
+
+    message.success('已加入生成队列')
+    setPrompt('') // 清空输入
   }
 
   return (
@@ -242,9 +261,9 @@ export function Gallery() {
       </Drawer>
 
       {/* ==================== 右下角：生成队列指示器 ==================== */}
-      {queueCount > 0 && (
+      {queue.length > 0 && (
         <div className="queue-indicator">
-          <Badge count={queueCount} size="small">
+          <Badge count={queue.length} size="small">
             <Button
               type="primary"
               icon={<ClockCircleOutlined />}
@@ -254,7 +273,7 @@ export function Gallery() {
               生成队列
             </Button>
           </Badge>
-          <div className="queue-info">预计等待时间: {queueCount * 30} 秒</div>
+          <div className="queue-info">预计等待时间: {queue.length * 30} 秒</div>
         </div>
       )}
 
@@ -273,7 +292,7 @@ export function Gallery() {
       <HistoryModal open={historyVisible} onClose={() => setHistoryVisible(false)} />
 
       {/* ==================== 生成队列详情抽屉 ==================== */}
-      <QueueDrawer open={queueDrawerOpen} onClose={() => setQueueDrawerOpen(false)} count={queueCount} />
+      <QueueDrawer open={queueDrawerOpen} onClose={() => setQueueDrawerOpen(false)} count={queue.length} />
     </div>
   )
 }

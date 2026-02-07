@@ -1,60 +1,13 @@
-import { useState } from 'react'
+import { useSelector } from 'react-redux'
 import { Drawer, List, Progress, Tag, Space, Button, Card, Tooltip } from 'antd'
 import {
-  CloseCircleOutlined,
   PauseCircleOutlined,
-  PlayCircleOutlined,
   DeleteOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons'
+import type { RootState } from '@/stores/store'
+import { useImageGeneration } from '@/hooks/useImageGeneration'
 import './QueueDrawer.css'
-
-// 模拟队列数据
-const mockQueue = [
-  {
-    id: '1',
-    prompt: '赛博朋克风格的未来城市',
-    style: 'cyberpunk',
-    styleLabel: '赛博朋克',
-    status: 'generating',
-    progress: 65,
-    eta: 15,
-    createdAt: '2024-01-20 16:35:00',
-  },
-  {
-    id: '2',
-    prompt: '水彩画风格的自然风景',
-    style: 'watercolor',
-    styleLabel: '水彩画',
-    status: 'waiting',
-    progress: 0,
-    eta: 45,
-    createdAt: '2024-01-20 16:36:00',
-  },
-  {
-    id: '3',
-    prompt: '像素艺术风格的游戏角色',
-    style: 'pixel-art',
-    styleLabel: '像素艺术',
-    status: 'waiting',
-    progress: 0,
-    eta: 75,
-    createdAt: '2024-01-20 16:37:00',
-  },
-]
-
-type QueueStatus = 'generating' | 'waiting' | 'paused' | 'failed'
-
-interface QueueItem {
-  id: string
-  prompt: string
-  style: string
-  styleLabel: string
-  status: QueueStatus
-  progress: number
-  eta: number // 预计等待时间（秒）
-  createdAt: string
-}
 
 interface QueueDrawerProps {
   open: boolean
@@ -67,55 +20,56 @@ interface QueueDrawerProps {
  *
  * 功能：
  * - 显示当前队列中的所有任务
- * - 实时更新进度（模拟）
- * - 支持暂停、取消任务
+ * - 实时更新进度
+ * - 支持取消任务
  * - 显示预计等待时间
  */
 export function QueueDrawer({ open, onClose, count }: QueueDrawerProps) {
-  const [queue, setQueue] = useState<QueueItem[]>(mockQueue)
+  const { cancelGeneration } = useImageGeneration()
+  const queue = useSelector((state: RootState) =>
+    state.images.history.filter(
+      (t) => t.status === 'pending' || t.status === 'generating'
+    )
+  )
 
   // 获取状态标签
-  const getStatusTag = (status: QueueStatus) => {
+  const getStatusTag = (status: string) => {
     switch (status) {
       case 'generating':
         return <Tag color="processing">生成中</Tag>
-      case 'waiting':
+      case 'pending':
         return <Tag color="default">等待中</Tag>
-      case 'paused':
-        return <Tag color="warning">已暂停</Tag>
       case 'failed':
         return <Tag color="error">失败</Tag>
+      default:
+        return <Tag color="default">{status}</Tag>
     }
   }
 
   // 获取状态图标
-  const getStatusIcon = (status: QueueStatus) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'generating':
-        return <PlayCircleOutlined style={{ color: '#52c41a' }} />
-      case 'waiting':
+        return <ClockCircleOutlined style={{ color: '#52c41a' }} />
+      case 'pending':
         return <ClockCircleOutlined style={{ color: '#9ca3af' }} />
-      case 'paused':
-        return <PauseCircleOutlined style={{ color: '#faad14' }} />
       case 'failed':
-        return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+        return <PauseCircleOutlined style={{ color: '#ff4d4f' }} />
+      default:
+        return <ClockCircleOutlined />
     }
-  }
-
-  // 处理暂停/继续
-  const handleTogglePause = (id: string) => {
-    console.log('切换暂停状态:', id)
-    // TODO: 实现暂停功能
   }
 
   // 处理取消
   const handleCancel = (id: string) => {
-    console.log('取消任务:', id)
-    setQueue(queue.filter(item => item.id !== id))
+    cancelGeneration(id)
   }
 
   // 计算总预计时间
-  const totalEta = queue.reduce((sum, item) => sum + item.eta, 0)
+  const totalEta = queue.reduce((sum, item) => {
+    const remainingProgress = 100 - item.progress
+    return sum + (remainingProgress / 100) * 30
+  }, 0)
 
   return (
     <Drawer
@@ -137,19 +91,19 @@ export function QueueDrawer({ open, onClose, count }: QueueDrawerProps) {
         <div className="summary-item">
           <span className="summary-label">总预计时间</span>
           <span className="summary-value">
-            {Math.floor(totalEta / 60)} 分 {totalEta % 60} 秒
+            {Math.floor(totalEta / 60)} 分 {Math.round(totalEta % 60)} 秒
           </span>
         </div>
         <div className="summary-item">
           <span className="summary-label">正在生成</span>
           <span className="summary-value">
-            {queue.filter(i => i.status === 'generating').length} 个
+            {queue.filter((i) => i.status === 'generating').length} 个
           </span>
         </div>
         <div className="summary-item">
           <span className="summary-label">等待中</span>
           <span className="summary-value">
-            {queue.filter(i => i.status === 'waiting').length} 个
+            {queue.filter((i) => i.status === 'pending').length} 个
           </span>
         </div>
       </Card>
@@ -179,63 +133,43 @@ export function QueueDrawer({ open, onClose, count }: QueueDrawerProps) {
               {item.status === 'generating' && (
                 <div className="queue-progress">
                   <Progress
-                    percent={item.progress}
+                    percent={Math.round(item.progress)}
                     status="active"
                     strokeColor="#3b82f6"
                     size="small"
                   />
-                  <span className="progress-text">预计 {item.eta} 秒</span>
+                  <span className="progress-text">
+                    进度 {Math.round(item.progress)}%
+                  </span>
                 </div>
               )}
 
-              {item.status === 'waiting' && (
+              {item.status === 'pending' && (
                 <div className="queue-progress">
-                  <span className="waiting-text">
-                    ⏳ 预计等待 {Math.floor(item.eta / 60)} 分 {item.eta % 60} 秒
-                  </span>
+                  <span className="waiting-text">⏳ 等待中...</span>
+                </div>
+              )}
+
+              {item.status === 'failed' && item.error && (
+                <div className="queue-error">
+                  <span className="error-text">❌ {item.error}</span>
                 </div>
               )}
 
               {/* 操作按钮 */}
               <div className="queue-actions">
                 <Space>
-                  {item.status === 'generating' && (
-                    <Tooltip title="暂停">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<PauseCircleOutlined />}
-                        onClick={() => handleTogglePause(item.id)}
-                      >
-                        暂停
-                      </Button>
-                    </Tooltip>
-                  )}
-                  {item.status === 'paused' && (
-                    <Tooltip title="继续">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<PlayCircleOutlined />}
-                        onClick={() => handleTogglePause(item.id)}
-                      >
-                        继续
-                      </Button>
-                    </Tooltip>
-                  )}
-                  {item.status !== 'generating' && (
-                    <Tooltip title="取消任务">
-                      <Button
-                        type="text"
-                        size="small"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleCancel(item.id)}
-                      >
-                        取消
-                      </Button>
-                    </Tooltip>
-                  )}
+                  <Tooltip title="取消任务">
+                    <Button
+                      type="text"
+                      size="small"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleCancel(item.id)}
+                    >
+                      取消
+                    </Button>
+                  </Tooltip>
                 </Space>
               </div>
             </div>
