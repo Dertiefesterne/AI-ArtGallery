@@ -71,7 +71,15 @@ export async function generateImage(
 
     // 返回图片 URL
     if (data.data && data.data[0] && data.data[0].url) {
-      return data.data[0].url
+      const imageUrl = data.data[0].url
+
+      // 如果是 SiliconFlow S3 URL，转换为代理 URL 以绕过 CORS
+      if (imageUrl.includes('s3.siliconflow.cn')) {
+        const url = new URL(imageUrl)
+        return `/s3-proxy${url.pathname}${url.search}`
+      }
+
+      return imageUrl
     }
 
     throw new Error('API 返回数据格式错误')

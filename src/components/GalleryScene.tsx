@@ -22,8 +22,23 @@ export function GalleryScene() {
     state.images.history
       .filter((item) => item.status === 'success' && item.imageUrl)
       .slice(0, 7)
-      .map((item) => item.imageUrl!)
+      .map((item) => {
+        // 转换 S3 URL 为代理 URL（支持旧图片）
+        let url = item.imageUrl!
+        if (url.includes('s3.siliconflow.cn')) {
+          try {
+            const urlObj = new URL(url)
+            url = `/s3-proxy${urlObj.pathname}${urlObj.search}`
+          } catch (e) {
+            console.error('URL转换失败:', e)
+          }
+        }
+        return url
+      })
   )
+
+  // 调试日志（可选，方便查看状态）
+  console.log('[GalleryScene] 显示图片数量:', generatedImages.length)
   return (
     <div className="w-full h-screen">
       <Canvas

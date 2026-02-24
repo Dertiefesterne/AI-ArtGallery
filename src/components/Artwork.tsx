@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import * as THREE from 'three'
-import { useTexture } from '@react-three/drei'
+import { TextureLoader } from 'three'
 
 interface ArtworkProps {
   position: [number, number, number]
@@ -20,17 +20,31 @@ interface ArtworkProps {
  */
 export function Artwork({ position, rotation, imageUrl }: ArtworkProps) {
   const groupRef = useRef<THREE.Group>(null)
-  const [textureError, setTextureError] = useState(false)
+  const [texture, setTexture] = useState<THREE.Texture | null>(null)
 
-  // 加载纹理
-  let texture = null
-  try {
-    if (imageUrl && !textureError) {
-      texture = useTexture(imageUrl)
+  // 加载纹理（已通过 Vite 代理解决 CORS）
+  useEffect(() => {
+    if (!imageUrl) {
+      setTexture(null)
+      return
     }
-  } catch (error) {
-    setTextureError(true)
-  }
+
+    const loader = new TextureLoader()
+    loader.setCrossOrigin('anonymous')
+    loader.load(
+      imageUrl,
+      (loadedTexture) => {
+        // 设置纹理颜色空间为 sRGB，确保颜色显示正确
+        loadedTexture.colorSpace = THREE.SRGBColorSpace
+        setTexture(loadedTexture)
+      },
+      undefined,
+      (error) => {
+        console.error('[Artwork] 纹理加载失败:', error)
+        setTexture(null)
+      }
+    )
+  }, [imageUrl])
 
   // 画框材质 - 古典金色
   const frameMaterial = (
@@ -73,27 +87,24 @@ export function Artwork({ position, rotation, imageUrl }: ArtworkProps) {
         {trimMaterial}
       </mesh>
 
-      {/* 画布 - 白色背景 */}
+      {/* 画布 - 深灰色背景 */}
       <mesh position={[0, 0, 0.1]}>
         <planeGeometry args={[1.4, 1.9]} />
         <meshStandardMaterial color="#2a2a2a" roughness={0.9} />
       </mesh>
 
-      {/* 占位画作内容 */}
-      <mesh position={[0, 0, 0.11]}>
-        <boxGeometry args={[1.3, 1.8, 0.03]} />
-        {texture && !textureError ? (
-          <meshStandardMaterial
+      {/* 画作内容 */}
+      <mesh position={[0, 0, 0.12]}>
+        <boxGeometry args={[1.3, 1.8, 0.01]} />
+        {texture ? (
+          <meshBasicMaterial
             map={texture}
-            roughness={0.8}
+            color="#ffffff"
           />
         ) : (
           <meshStandardMaterial
             color="#4a5568"
             roughness={0.8}
-            polygonOffset={true}
-            polygonOffsetFactor={1}
-            polygonOffsetUnits={1}
           />
         )}
       </mesh>

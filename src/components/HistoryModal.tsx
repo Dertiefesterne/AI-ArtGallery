@@ -32,6 +32,20 @@ export function HistoryModal({ open, onClose }: HistoryModalProps) {
   const history = useSelector((state: RootState) => state.images.history)
   const [selectedTab, setSelectedTab] = useState<'all' | 'success' | 'failed' | 'pending'>('all')
 
+  // 转换S3 URL为代理URL的辅助函数
+  const convertToProxyUrl = (url: string) => {
+    if (url.includes('s3.siliconflow.cn')) {
+      try {
+        const urlObj = new URL(url)
+        return `/s3-proxy${urlObj.pathname}${urlObj.search}`
+      } catch (e) {
+        console.error('URL转换失败:', e)
+        return url
+      }
+    }
+    return url
+  }
+
   // 根据选中的 tab 过滤历史记录
   const filteredHistory = useMemo(() => {
     if (selectedTab === 'all') return history
@@ -175,18 +189,16 @@ export function HistoryModal({ open, onClose }: HistoryModalProps) {
             className="history-item"
             actions={[
               item.status === 'success' && item.imageUrl && (
-                <Tooltip title="查看大图">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.prompt}
-                    width={30}
-                    height={30}
-                    style={{ cursor: 'pointer', borderRadius: 4 }}
-                    preview={{
-                      mask: <EyeOutlined />,
-                    }}
-                  />
-                </Tooltip>
+                <Image
+                  src={convertToProxyUrl(item.imageUrl)}
+                  alt={item.prompt}
+                  width={30}
+                  height={30}
+                  style={{ cursor: 'pointer', borderRadius: 4 }}
+                  preview={{
+                    mask: '查看大图',
+                  }}
+                />
               ),
               item.status === 'success' && item.imageUrl && (
                 <Tooltip title="下载">
@@ -194,7 +206,7 @@ export function HistoryModal({ open, onClose }: HistoryModalProps) {
                     type="text"
                     size="small"
                     icon={<DownloadOutlined />}
-                    onClick={() => handleDownload(item.imageUrl!, item.prompt)}
+                    onClick={() => handleDownload(convertToProxyUrl(item.imageUrl!), item.prompt)}
                   />
                 </Tooltip>
               ),
@@ -227,7 +239,7 @@ export function HistoryModal({ open, onClose }: HistoryModalProps) {
               description={
                 <div>
                   <div className="history-prompt">{item.prompt}</div>
-                  <Space className="history-meta" split="|">
+                  <Space className="history-meta" separator="|">
                     <span className="history-time">{item.createdAt}</span>
                     {item.duration && <span>耗时 {item.duration} 秒</span>}
                     {item.error && <span className="history-error">{item.error}</span>}

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { Provider } from 'react-redux'
-import { ConfigProvider, theme } from 'antd'
+import { ConfigProvider, theme, App as AntApp } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import { store } from '@/stores/store'
 import { Gallery } from '@/pages/Gallery'
@@ -19,7 +19,9 @@ function App() {
             },
           }}
         >
-          <Gallery />
+          <AntApp>
+            <Gallery />
+          </AntApp>
         </ConfigProvider>
       </Provider>
     </StrictMode>

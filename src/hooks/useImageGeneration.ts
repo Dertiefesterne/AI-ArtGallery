@@ -7,19 +7,13 @@ import { useCallback } from 'react'
 import { nanoid } from 'nanoid'
 import type { AppDispatch, RootState } from '@/stores/store'
 import type { GenerationParams, ImageGeneration } from '@/types/image'
-import {
-  addToHistory,
-  updateTask,
-  deleteTask,
-  generateImageAsync,
-} from '@/stores/imageSlice'
+import { addToHistory, updateTask, deleteTask, generateImageAsync } from '@/stores/imageSlice'
 
 /**
  * 使用类型化的 hooks
  */
 export const useAppDispatch = () => useDispatch<AppDispatch>()
-export const useAppSelector = <T>(selector: (state: RootState) => T): T =>
-  useSelector(selector)
+export const useAppSelector = <T>(selector: (state: RootState) => T): T => useSelector(selector)
 
 /**
  * 图片生成 Hook
@@ -28,12 +22,10 @@ export function useImageGeneration() {
   const dispatch = useAppDispatch()
 
   // 获取队列和历史记录
-  const queue = useAppSelector((state) =>
-    state.images.history.filter(
-      (t) => t.status === 'pending' || t.status === 'generating'
-    )
+  const queue = useAppSelector(state =>
+    state.images.history.filter(t => t.status === 'pending' || t.status === 'generating')
   )
-  const history = useAppSelector((state) => state.images.history)
+  const history = useAppSelector(state => state.images.history)
 
   /**
    * 提交生成任务
@@ -69,33 +61,42 @@ export function useImageGeneration() {
   /**
    * 模拟进度更新
    */
-  const simulateProgress = useCallback((id: string) => {
-    let progress = 0
-    const interval = setInterval(() => {
-      progress += Math.random() * 10 + 5 // 随机增加 5-15%
+  const simulateProgress = useCallback(
+    (id: string) => {
+      let progress = 0
+      const interval = setInterval(() => {
+        progress += Math.random() * 10 + 5 // 随机增加 5-15%
 
-      if (progress >= 95) {
-        clearInterval(interval)
-        progress = 95 // 等待 API 返回，最多到 95%
-      }
+        if (progress >= 95) {
+          clearInterval(interval)
+          progress = 95 // 等待 API 返回，最多到 95%
+        }
 
-      dispatch(updateTask({ id, progress }))
-    }, 500)
-  }, [dispatch])
+        dispatch(updateTask({ id, progress }))
+      }, 500)
+    },
+    [dispatch]
+  )
 
   /**
    * 取消任务
    */
-  const cancelGeneration = useCallback((id: string) => {
-    dispatch(deleteTask(id))
-  }, [dispatch])
+  const cancelGeneration = useCallback(
+    (id: string) => {
+      dispatch(deleteTask(id))
+    },
+    [dispatch]
+  )
 
   /**
    * 删除任务
    */
-  const deleteGeneration = useCallback((id: string) => {
-    dispatch(deleteTask(id))
-  }, [dispatch])
+  const deleteGeneration = useCallback(
+    (id: string) => {
+      dispatch(deleteTask(id))
+    },
+    [dispatch]
+  )
 
   /**
    * 清空历史
