@@ -1,10 +1,6 @@
 import { useSelector } from 'react-redux'
 import { Drawer, List, Progress, Tag, Space, Button, Card, Tooltip } from 'antd'
-import {
-  PauseCircleOutlined,
-  DeleteOutlined,
-  ClockCircleOutlined,
-} from '@ant-design/icons'
+import { PauseCircleOutlined, DeleteOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import type { RootState } from '@/stores/store'
 import { useImageGeneration } from '@/hooks/useImageGeneration'
 import './QueueDrawer.css'
@@ -27,9 +23,7 @@ interface QueueDrawerProps {
 export function QueueDrawer({ open, onClose, count }: QueueDrawerProps) {
   const { cancelGeneration } = useImageGeneration()
   const queue = useSelector((state: RootState) =>
-    state.images.history.filter(
-      (t) => t.status === 'pending' || t.status === 'generating'
-    )
+    state.images.history.filter(t => t.status === 'pending' || t.status === 'generating')
   )
 
   // 获取状态标签
@@ -97,13 +91,13 @@ export function QueueDrawer({ open, onClose, count }: QueueDrawerProps) {
         <div className="summary-item">
           <span className="summary-label">正在生成</span>
           <span className="summary-value">
-            {queue.filter((i) => i.status === 'generating').length} 个
+            {queue.filter(i => i.status === 'generating').length} 个
           </span>
         </div>
         <div className="summary-item">
           <span className="summary-label">等待中</span>
           <span className="summary-value">
-            {queue.filter((i) => i.status === 'pending').length} 个
+            {queue.filter(i => i.status === 'pending').length} 个
           </span>
         </div>
       </Card>
@@ -138,9 +132,7 @@ export function QueueDrawer({ open, onClose, count }: QueueDrawerProps) {
                     strokeColor="#3b82f6"
                     size="small"
                   />
-                  <span className="progress-text">
-                    进度 {Math.round(item.progress)}%
-                  </span>
+                  <span className="progress-text">进度 {Math.round(item.progress)}%</span>
                 </div>
               )}
 

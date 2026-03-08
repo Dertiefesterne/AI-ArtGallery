@@ -20,9 +20,9 @@ export function GalleryScene() {
   // 从 Redux 获取已成功生成的图片（最多 7 张）
   const generatedImages = useSelector((state: RootState) =>
     state.images.history
-      .filter((item) => item.status === 'success' && item.imageUrl)
+      .filter(item => item.status === 'success' && item.imageUrl)
       .slice(0, 7)
-      .map((item) => {
+      .map(item => {
         // 转换 S3 URL 为代理 URL（支持旧图片）
         let url = item.imageUrl!
         if (url.includes('s3.siliconflow.cn')) {
@@ -96,14 +96,38 @@ export function GalleryScene() {
           <Room />
 
           {/* 左墙（X=-6）：3幅画，面向右侧（走廊内部） */}
-          <Artwork position={[-5.92, 3, -6]} rotation={[0, Math.PI / 2, 0]} imageUrl={generatedImages[0]} />
-          <Artwork position={[-5.92, 3, 0]} rotation={[0, Math.PI / 2, 0]} imageUrl={generatedImages[1]} />
-          <Artwork position={[-5.92, 3, 6]} rotation={[0, Math.PI / 2, 0]} imageUrl={generatedImages[2]} />
+          <Artwork
+            position={[-5.92, 3, -6]}
+            rotation={[0, Math.PI / 2, 0]}
+            imageUrl={generatedImages[0]}
+          />
+          <Artwork
+            position={[-5.92, 3, 0]}
+            rotation={[0, Math.PI / 2, 0]}
+            imageUrl={generatedImages[1]}
+          />
+          <Artwork
+            position={[-5.92, 3, 6]}
+            rotation={[0, Math.PI / 2, 0]}
+            imageUrl={generatedImages[2]}
+          />
 
           {/* 右墙（X=6）：3幅画，面向左侧（走廊内部） */}
-          <Artwork position={[5.92, 3, -6]} rotation={[0, -Math.PI / 2, 0]} imageUrl={generatedImages[3]} />
-          <Artwork position={[5.92, 3, 0]} rotation={[0, -Math.PI / 2, 0]} imageUrl={generatedImages[4]} />
-          <Artwork position={[5.92, 3, 6]} rotation={[0, -Math.PI / 2, 0]} imageUrl={generatedImages[5]} />
+          <Artwork
+            position={[5.92, 3, -6]}
+            rotation={[0, -Math.PI / 2, 0]}
+            imageUrl={generatedImages[3]}
+          />
+          <Artwork
+            position={[5.92, 3, 0]}
+            rotation={[0, -Math.PI / 2, 0]}
+            imageUrl={generatedImages[4]}
+          />
+          <Artwork
+            position={[5.92, 3, 6]}
+            rotation={[0, -Math.PI / 2, 0]}
+            imageUrl={generatedImages[5]}
+          />
 
           {/* 走廊尽头墙（Z=-10）：1幅画，面向前方（走廊入口） */}
           <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} imageUrl={generatedImages[6]} />

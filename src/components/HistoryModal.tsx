@@ -57,16 +57,19 @@ export function HistoryModal({ open, onClose }: HistoryModalProps) {
       pending: 'pending',
     }
 
-    return history.filter((item) => item.status === statusMap[selectedTab])
+    return history.filter(item => item.status === statusMap[selectedTab])
   }, [history, selectedTab])
 
   // 统计各状态数量
-  const stats = useMemo(() => ({
-    all: history.length,
-    success: history.filter((i) => i.status === 'success').length,
-    failed: history.filter((i) => i.status === 'failed').length,
-    pending: history.filter((i) => i.status === 'pending').length,
-  }), [history])
+  const stats = useMemo(
+    () => ({
+      all: history.length,
+      success: history.filter(i => i.status === 'success').length,
+      failed: history.filter(i => i.status === 'failed').length,
+      pending: history.filter(i => i.status === 'pending').length,
+    }),
+    [history]
+  )
 
   // 获取状态标签
   const getStatusTag = (status: GenerationStatus) => {
@@ -179,11 +182,15 @@ export function HistoryModal({ open, onClose }: HistoryModalProps) {
         locale={{
           emptyText: (
             <Empty
-              description={selectedTab === 'all' ? '暂无生成记录' : `暂无${selectedTab === 'success' ? '成功' : selectedTab === 'failed' ? '失败' : '等待中'}的记录`}
+              description={
+                selectedTab === 'all'
+                  ? '暂无生成记录'
+                  : `暂无${selectedTab === 'success' ? '成功' : selectedTab === 'failed' ? '失败' : '等待中'}的记录`
+              }
             />
           ),
         }}
-        renderItem={(item) => (
+        renderItem={item => (
           <List.Item
             key={item.id}
             className="history-item"
@@ -222,11 +229,7 @@ export function HistoryModal({ open, onClose }: HistoryModalProps) {
             ]}
           >
             <List.Item.Meta
-              avatar={
-                <div className="history-avatar">
-                  {getStatusIcon(item.status)}
-                </div>
-              }
+              avatar={<div className="history-avatar">{getStatusIcon(item.status)}</div>}
               title={
                 <Space>
                   {getStatusTag(item.status)}

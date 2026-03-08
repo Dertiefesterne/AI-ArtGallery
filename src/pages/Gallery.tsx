@@ -8,11 +8,13 @@ import {
   ClockCircleOutlined,
   UserOutlined,
   CloseOutlined,
+  SoundOutlined,
 } from '@ant-design/icons'
 import { GalleryScene } from '@/components/GalleryScene'
 import { HistoryModal } from '@/components/HistoryModal'
 import { QueueDrawer } from '@/components/QueueDrawer'
 import { useImageGeneration } from '@/hooks/useImageGeneration'
+import { useBackgroundMusic } from '@/hooks/useBackgroundMusic'
 import { STYLE_PRESETS } from '@/services/imageGen'
 import './Gallery.css'
 
@@ -28,9 +30,22 @@ const { TextArea } = Input
  * 4. 环境设置（右侧抽屉）
  * 5. 生成历史（Modal）
  */
+// 背景音乐源列表（按优先级排序）
+// 1. 本地文件（需手动添加到 public/audio/background.mp3）
+// 2. 在线备选源
+const BACKGROUND_MUSIC_SOURCES = [
+  '/audio/background.mp3',
+  // 备选在线源（SoundHelix 免费音乐，支持 CORS）
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+]
+
 export function Gallery() {
   // 使用图片生成 Hook
   const { queue, history, submitGeneration } = useImageGeneration()
+
+  // 背景音乐 Hook
+  const backgroundMusic = useBackgroundMusic(BACKGROUND_MUSIC_SOURCES)
 
   // AI 生成面板状态
   const [generatePanelOpen, setGeneratePanelOpen] = useState(false)
@@ -47,6 +62,16 @@ export function Gallery() {
 
   // 生成队列状态
   const [queueDrawerOpen, setQueueDrawerOpen] = useState(false)
+
+  // 处理音乐开关
+  const handleMusicToggle = (enabled: boolean) => {
+    setMusicEnabled(enabled)
+    if (enabled) {
+      backgroundMusic.play()
+    } else {
+      backgroundMusic.pause()
+    }
+  }
 
   // 艺术风格选项（从 STYLE_PRESETS 生成）
   const styleOptions = [
@@ -99,18 +124,12 @@ export function Gallery() {
         <div className="header-right">
           <Space>
             {/* 生成历史按钮 */}
-            <Button
-              icon={<HistoryOutlined />}
-              onClick={() => setHistoryVisible(true)}
-            >
+            <Button icon={<HistoryOutlined />} onClick={() => setHistoryVisible(true)}>
               历史记录
             </Button>
 
             {/* 环境设置按钮 */}
-            <Button
-              icon={<SettingOutlined />}
-              onClick={() => setSettingsPanelOpen(true)}
-            >
+            <Button icon={<SettingOutlined />} onClick={() => setSettingsPanelOpen(true)}>
               环境设置
             </Button>
 
@@ -194,9 +213,7 @@ export function Gallery() {
           </Button>
 
           {/* 提示信息 */}
-          {!prompt.trim() && (
-            <div className="hint-text">请输入作品描述以启用生成按钮</div>
-          )}
+          {!prompt.trim() && <div className="hint-text">请输入作品描述以启用生成按钮</div>}
         </div>
       </Drawer>
 
@@ -231,9 +248,38 @@ export function Gallery() {
           <div className="setting-section">
             <h3>🎵 背景音乐</h3>
             <div className="setting-item">
-              <label>启用音乐</label>
-              <Switch checked={musicEnabled} onChange={setMusicEnabled} />
+              <label>
+                <SoundOutlined /> 启用音乐{' '}
+                <Switch
+                  checked={musicEnabled}
+                  onChange={handleMusicToggle}
+                  disabled={!backgroundMusic.isReady}
+                />
+              </label>
             </div>
+            {musicEnabled && (
+              <div className="setting-item">
+                <label>音量</label>
+                <Slider
+                  min={0}
+                  max={100}
+                  value={backgroundMusic.volume}
+                  onChange={backgroundMusic.setVolume}
+                  style={{ flex: 1, margin: '0 12px' }}
+                />
+                <span className="setting-value">{backgroundMusic.volume}%</span>
+              </div>
+            )}
+            {backgroundMusic.isLoading && (
+              <div className="music-status" style={{ color: '#888', fontSize: '12px' }}>
+                音乐加载中...
+              </div>
+            )}
+            {backgroundMusic.isError && (
+              <div className="music-status" style={{ color: '#ff4d4f', fontSize: '12px' }}>
+                {backgroundMusic.errorMessage}
+              </div>
+            )}
           </div>
 
           {/* 视角控制 */}
@@ -292,7 +338,11 @@ export function Gallery() {
       <HistoryModal open={historyVisible} onClose={() => setHistoryVisible(false)} />
 
       {/* ==================== 生成队列详情抽屉 ==================== */}
-      <QueueDrawer open={queueDrawerOpen} onClose={() => setQueueDrawerOpen(false)} count={queue.length} />
+      <QueueDrawer
+        open={queueDrawerOpen}
+        onClose={() => setQueueDrawerOpen(false)}
+        count={queue.length}
+      />
     </div>
   )
 }

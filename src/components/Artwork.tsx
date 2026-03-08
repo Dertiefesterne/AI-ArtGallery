@@ -5,7 +5,7 @@ import { TextureLoader } from 'three'
 interface ArtworkProps {
   position: [number, number, number]
   rotation: [number, number, number]
-  imageUrl?: string  // 可选的图片 URL
+  imageUrl?: string // 可选的图片 URL
 }
 
 /**
@@ -33,13 +33,13 @@ export function Artwork({ position, rotation, imageUrl }: ArtworkProps) {
     loader.setCrossOrigin('anonymous')
     loader.load(
       imageUrl,
-      (loadedTexture) => {
+      loadedTexture => {
         // 设置纹理颜色空间为 sRGB，确保颜色显示正确
         loadedTexture.colorSpace = THREE.SRGBColorSpace
         setTexture(loadedTexture)
       },
       undefined,
-      (error) => {
+      error => {
         console.error('[Artwork] 纹理加载失败:', error)
         setTexture(null)
       }
@@ -56,22 +56,10 @@ export function Artwork({ position, rotation, imageUrl }: ArtworkProps) {
   )
 
   // 画框装饰条材质 - 稍浅的金色
-  const trimMaterial = (
-    <meshStandardMaterial
-      color="#f4d03f"
-      roughness={0.2}
-      metalness={0.9}
-    />
-  )
+  const trimMaterial = <meshStandardMaterial color="#f4d03f" roughness={0.2} metalness={0.9} />
 
   // 画布材质
-  const canvasMaterial = (
-    <meshStandardMaterial
-      color="#ffffff"
-      roughness={1}
-      metalness={0}
-    />
-  )
+  const canvasMaterial = <meshStandardMaterial color="#ffffff" roughness={1} metalness={0} />
 
   return (
     <group ref={groupRef} position={position} rotation={rotation}>
@@ -97,15 +85,9 @@ export function Artwork({ position, rotation, imageUrl }: ArtworkProps) {
       <mesh position={[0, 0, 0.12]}>
         <boxGeometry args={[1.3, 1.8, 0.01]} />
         {texture ? (
-          <meshBasicMaterial
-            map={texture}
-            color="#ffffff"
-          />
+          <meshBasicMaterial map={texture} color="#ffffff" />
         ) : (
-          <meshStandardMaterial
-            color="#4a5568"
-            roughness={0.8}
-          />
+          <meshStandardMaterial color="#4a5568" roughness={0.8} />
         )}
       </mesh>
 

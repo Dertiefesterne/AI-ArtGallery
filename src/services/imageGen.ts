@@ -2,10 +2,7 @@
  * SiliconFlow 图片生成 API 服务
  */
 
-import type {
-  SiliconFlowApiParams,
-  SiliconFlowImageResponse,
-} from '@/types/image'
+import type { SiliconFlowApiParams, SiliconFlowImageResponse } from '@/types/image'
 
 const API_BASE_URL = 'https://api.siliconflow.cn/v1'
 const API_KEY = import.meta.env.VITE_SILICONFLOW_API_KEY
@@ -27,10 +24,7 @@ export const STYLE_PRESETS: Record<string, string> = {
 /**
  * 调用 SiliconFlow 图片生成 API
  */
-export async function generateImage(
-  prompt: string,
-  style: string
-): Promise<string> {
+export async function generateImage(prompt: string, style: string): Promise<string> {
   // 检查 API Key
   if (!API_KEY) {
     throw new Error('SiliconFlow API Key 未配置，请检查 .env.local 文件')
@@ -38,9 +32,7 @@ export async function generateImage(
 
   // 构建完整提示词
   const stylePrompt = STYLE_PRESETS[style] || ''
-  const fullPrompt = stylePrompt
-    ? `${prompt}, ${stylePrompt}`
-    : prompt
+  const fullPrompt = stylePrompt ? `${prompt}, ${stylePrompt}` : prompt
 
   // API 请求参数
   const params: SiliconFlowApiParams = {
@@ -54,7 +46,7 @@ export async function generateImage(
     const response = await fetch(`${API_BASE_URL}/images/generations`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        Authorization: `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(params),
@@ -104,7 +96,7 @@ export async function testApiConnection(): Promise<boolean> {
     const response = await fetch(`${API_BASE_URL}/models`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        Authorization: `Bearer ${API_KEY}`,
       },
     })
 

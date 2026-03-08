@@ -29,7 +29,7 @@ export const generateImageAsync = createAsyncThunk(
  * 状态类型
  */
 interface ImageState {
-  history: ImageGeneration[]  // 所有任务历史
+  history: ImageGeneration[] // 所有任务历史
 }
 
 /**
@@ -66,7 +66,7 @@ const imageSlice = createSlice({
       }>
     ) => {
       const { id, status, progress } = action.payload
-      const task = state.history.find((t) => t.id === id)
+      const task = state.history.find(t => t.id === id)
 
       if (task) {
         if (status) task.status = status
@@ -78,22 +78,22 @@ const imageSlice = createSlice({
      * 删除任务
      */
     deleteTask: (state, action: PayloadAction<string>) => {
-      state.history = state.history.filter((t) => t.id !== action.payload)
+      state.history = state.history.filter(t => t.id !== action.payload)
     },
 
     /**
      * 清空历史
      */
-    clearHistory: (state) => {
+    clearHistory: state => {
       state.history = []
     },
   },
 
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
       // 生成开始
       .addCase(generateImageAsync.pending, (state, action) => {
-        const task = state.history.find((t) => t.id === action.meta.arg.id)
+        const task = state.history.find(t => t.id === action.meta.arg.id)
         if (task) {
           task.status = 'generating'
           task.progress = 0
@@ -101,7 +101,7 @@ const imageSlice = createSlice({
       })
       // 生成成功
       .addCase(generateImageAsync.fulfilled, (state, action) => {
-        const task = state.history.find((t) => t.id === action.meta.arg.id)
+        const task = state.history.find(t => t.id === action.meta.arg.id)
         if (task) {
           task.status = 'success'
           task.progress = 100
@@ -111,7 +111,7 @@ const imageSlice = createSlice({
       })
       // 生成失败
       .addCase(generateImageAsync.rejected, (state, action) => {
-        const task = state.history.find((t) => t.id === action.meta.arg.id)
+        const task = state.history.find(t => t.id === action.meta.arg.id)
         if (task) {
           task.status = 'failed'
           task.error = action.payload as string
@@ -123,8 +123,7 @@ const imageSlice = createSlice({
 /**
  * 导出 Actions
  */
-export const { addToHistory, updateTask, deleteTask, clearHistory } =
-  imageSlice.actions
+export const { addToHistory, updateTask, deleteTask, clearHistory } = imageSlice.actions
 
 /**
  * 导出 Reducer
@@ -134,15 +133,10 @@ export default imageSlice.reducer
 /**
  * 导出 Selectors
  */
-export const selectHistory = (state: { images: ImageState }) =>
-  state.images.history
+export const selectHistory = (state: { images: ImageState }) => state.images.history
 
 export const selectQueue = (state: { images: ImageState }) =>
-  state.images.history.filter(
-    (t) => t.status === 'pending' || t.status === 'generating'
-  )
+  state.images.history.filter(t => t.status === 'pending' || t.status === 'generating')
 
 export const selectCompletedTasks = (state: { images: ImageState }) =>
-  state.images.history.filter(
-    (t) => t.status === 'success' || t.status === 'failed'
-  )
+  state.images.history.filter(t => t.status === 'success' || t.status === 'failed')
