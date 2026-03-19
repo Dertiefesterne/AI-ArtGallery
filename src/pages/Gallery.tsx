@@ -15,6 +15,7 @@ import { HistoryModal } from '@/components/HistoryModal'
 import { QueueDrawer } from '@/components/QueueDrawer'
 import { useImageGeneration } from '@/hooks/useImageGeneration'
 import { useBackgroundMusic } from '@/hooks/useBackgroundMusic'
+import { useCameraControl } from '@/hooks/useCameraControl'
 import { STYLE_PRESETS } from '@/services/imageGen'
 import './Gallery.css'
 
@@ -46,6 +47,9 @@ export function Gallery() {
 
   // 背景音乐 Hook
   const backgroundMusic = useBackgroundMusic(BACKGROUND_MUSIC_SOURCES)
+
+  // 相机控制 Hook
+  const cameraControl = useCameraControl()
 
   // AI 生成面板状态
   const [generatePanelOpen, setGeneratePanelOpen] = useState(false)
@@ -108,7 +112,7 @@ export function Gallery() {
     <div className="gallery-container">
       {/* ==================== 3D 画廊场景 ==================== */}
       <div className="gallery-scene">
-        <GalleryScene />
+        <GalleryScene currentView={cameraControl.currentView} />
       </div>
 
       {/* ==================== 顶部控制栏 ==================== */}
@@ -286,9 +290,15 @@ export function Gallery() {
           <div className="setting-section">
             <h3>🎥 视角控制</h3>
             <div className="control-buttons">
-              <Button block>重置视角</Button>
-              <Button block>俯视图</Button>
-              <Button block>侧视图</Button>
+              <Button block onClick={cameraControl.resetView}>
+                重置视角
+              </Button>
+              <Button block onClick={cameraControl.setTopView}>
+                俯视图
+              </Button>
+              <Button block onClick={cameraControl.setSideView}>
+                侧视图
+              </Button>
             </div>
           </div>
 
