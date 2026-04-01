@@ -10,6 +10,7 @@ import type { CameraView } from '@/hooks/useCameraControl'
 
 interface GallerySceneProps {
   currentView?: CameraView
+  brightness?: number // 0-100 的亮度值
 }
 
 /**
@@ -113,13 +114,16 @@ function CameraAnimator({ targetView }: { targetView: CameraView }) {
 /**
  * 画廊 3D 场景组件
  */
-export function GalleryScene({ currentView }: GallerySceneProps) {
+export function GalleryScene({ currentView, brightness = 50 }: GallerySceneProps) {
   // 默认视角
   const view: CameraView = currentView || {
     position: [0, 1.6, 12],
     target: [0, 3, -10],
     id: 0,
   }
+
+  // 计算光照强度系数（brightness 0-100 映射到 0.2-2.0）
+  const intensityMultiplier = 0.2 + (brightness / 100) * 1.8
 
   // 从 Redux 获取已成功生成的图片（最多 7 张）
   const generatedImages = useSelector((state: RootState) =>
@@ -156,11 +160,11 @@ export function GalleryScene({ currentView }: GallerySceneProps) {
       >
         <PerspectiveCamera makeDefault position={view.position} fov={90} />
 
-        <ambientLight intensity={1.2} />
+        <ambientLight intensity={1.2 * intensityMultiplier} />
 
         <directionalLight
           position={[0, 10, 0]}
-          intensity={1.5}
+          intensity={1.5 * intensityMultiplier}
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
@@ -173,9 +177,9 @@ export function GalleryScene({ currentView }: GallerySceneProps) {
           shadow-normalBias={0.02}
         />
 
-        <pointLight position={[5, 4, 5]} intensity={0.8} />
-        <pointLight position={[-5, 4, -5]} intensity={0.8} />
-        <pointLight position={[0, 4, 0]} intensity={0.5} />
+        <pointLight position={[5, 4, 5]} intensity={0.8 * intensityMultiplier} />
+        <pointLight position={[-5, 4, -5]} intensity={0.8 * intensityMultiplier} />
+        <pointLight position={[0, 4, 0]} intensity={0.5 * intensityMultiplier} />
 
         <CameraAnimator targetView={view} />
 

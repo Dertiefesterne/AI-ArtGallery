@@ -112,7 +112,7 @@ export function Gallery() {
     <div className="gallery-container">
       {/* ==================== 3D 画廊场景 ==================== */}
       <div className="gallery-scene">
-        <GalleryScene currentView={cameraControl.currentView} />
+        <GalleryScene currentView={cameraControl.currentView} brightness={brightness} />
       </div>
 
       {/* ==================== 顶部控制栏 ==================== */}
