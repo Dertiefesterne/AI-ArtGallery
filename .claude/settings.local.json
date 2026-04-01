@@ -4,7 +4,22 @@
       "Bash(pnpm run lint:fix:*)",
       "Bash(pnpm run build:*)",
       "Bash(cat:*)",
-      "Bash(pnpm add:*)"
+      "Bash(pnpm add:*)",
+      "Bash(tree:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(Gallery.tsx)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(more:*)",
+      "Bash(npx run build:*)",
+      "Bash(npm cache clean:*)"
     ]
   }
 }
