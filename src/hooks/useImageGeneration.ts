@@ -7,7 +7,7 @@ import { useCallback } from 'react'
 import { nanoid } from 'nanoid'
 import type { AppDispatch, RootState } from '@/stores/store'
 import type { GenerationParams, ImageGeneration } from '@/types/image'
-import { addToHistory, updateTask, deleteTask, generateImageAsync } from '@/stores/imageSlice'
+import { addToHistory, updateTask, deleteTask, generateImageAsync, clearHistory as clearHistoryAction } from '@/stores/imageSlice'
 
 /**
  * 使用类型化的 hooks
@@ -102,7 +102,7 @@ export function useImageGeneration() {
    * 清空历史
    */
   const clearHistory = useCallback(() => {
-    dispatch(clearHistory())
+    dispatch(clearHistoryAction())
   }, [dispatch])
 
   return {

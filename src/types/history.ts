@@ -1,7 +1,7 @@
 /**
  * 生成任务状态
  */
-export type GenerationStatus = 'success' | 'failed' | 'pending'
+export type GenerationStatus = 'pending' | 'generating' | 'success' | 'failed'
 
 /**
  * 生成历史记录

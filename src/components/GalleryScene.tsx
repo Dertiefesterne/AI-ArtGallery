@@ -7,6 +7,7 @@ import { Room } from './Room'
 import { Artwork } from './Artwork'
 import type { RootState } from '@/stores/store'
 import type { CameraView } from '@/hooks/useCameraControl'
+import type { KeyboardConfig } from '@/hooks/useKeyboardNavigation'
 
 interface GallerySceneProps {
   currentView?: CameraView
@@ -16,10 +17,27 @@ interface GallerySceneProps {
 /**
  * 相机动画控制器组件
  * 只在视角变化时执行平滑过渡，之后允许用户自由控制
+ * 同时支持键盘漫游
  */
-function CameraAnimator({ targetView }: { targetView: CameraView }) {
+function CameraAnimator({
+  targetView,
+  config,
+}: {
+  targetView: CameraView
+  config?: KeyboardConfig
+}) {
   const { camera } = useThree()
   const controlsRef = useRef<any>(null)
+  const moveConfig = useRef<KeyboardConfig>({
+    moveSpeed: 0.1,
+    rotationSpeed: 1,
+    enableCollision: true,
+    collisionBounds: new THREE.Box3(new THREE.Vector3(-10, 0, -10), new THREE.Vector3(10, 10, 10)),
+    enableFootstep: false,
+    ...config,
+  })
+  const keysPressed = useRef<Set<string>>(new Set())
+  const moveVector = useRef(new THREE.Vector3())
 
   // 动画状态
   const [isAnimating, setIsAnimating] = useState(false)
@@ -63,6 +81,25 @@ function CameraAnimator({ targetView }: { targetView: CameraView }) {
     }
   }, [targetView, camera])
 
+  // 键盘事件监听器
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      keysPressed.current.add(event.code)
+    }
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      keysPressed.current.delete(event.code)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [])
+
   // 每帧更新
   useFrame(() => {
     // 首次初始化：直接设置相机位置和目标
@@ -74,6 +111,50 @@ function CameraAnimator({ targetView }: { targetView: CameraView }) {
       return
     }
 
+    // 键盘移动（仅在非动画状态时)
+    if (!isAnimating && keysPressed.current.size > 0 && controlsRef.current) {
+      const speed = moveConfig.current.moveSpeed
+      moveVector.current.set(0, 0, 0)
+
+      // 获取相机朝向（水平方向）
+      const forward = new THREE.Vector3()
+      camera.getWorldDirection(forward)
+      forward.y = 0 // 保持在水平面上
+      forward.normalize()
+
+      // 计算右方向
+      const right = new THREE.Vector3()
+      right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize()
+
+      // 根据按键计算移动方向
+      if (keysPressed.current.has('KeyW') || keysPressed.current.has('ArrowUp')) {
+        moveVector.current.add(forward.clone().multiplyScalar(speed))
+      }
+      if (keysPressed.current.has('KeyS') || keysPressed.current.has('ArrowDown')) {
+        moveVector.current.add(forward.clone().multiplyScalar(-speed))
+      }
+      if (keysPressed.current.has('KeyA') || keysPressed.current.has('ArrowLeft')) {
+        moveVector.current.add(right.clone().multiplyScalar(-speed))
+      }
+      if (keysPressed.current.has('KeyD') || keysPressed.current.has('ArrowRight')) {
+        moveVector.current.add(right.clone().multiplyScalar(speed))
+      }
+
+      // 检查碰撞
+      if (moveVector.current.length() > 0.01 && moveConfig.current.enableCollision) {
+        const newPosition = camera.position.clone().add(moveVector.current)
+        if (!moveConfig.current.collisionBounds.containsPoint(newPosition)) {
+          moveVector.current.set(0, 0, 0)
+        }
+      }
+
+      // 应用移动
+      if (moveVector.current.length() > 0.01) {
+        camera.position.add(moveVector.current)
+        controlsRef.current.target.add(moveVector.current)
+        controlsRef.current.update()
+      }
+    }
     // 动画中
     if (isAnimating && controlsRef.current) {
       animationProgress.current += 0.03

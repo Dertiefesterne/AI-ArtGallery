@@ -1,5 +1,4 @@
-import { useRef } from 'react'
-import { Mesh } from 'three'
+// Room 组件 - 画廊房间
 
 /**
  * 画廊房间组件 - 竖直走廊

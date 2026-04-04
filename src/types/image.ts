@@ -28,6 +28,7 @@ export interface ImageGeneration {
  * 生成参数
  */
 export interface GenerationParams {
+  id?: string // 唯一标识（可选）
   prompt: string // 文本描述
   style: string // 风格标识
   styleLabel: string // 风格显示名称

@@ -19,7 +19,9 @@
       "Bash(findstr:*)",
       "Bash(more:*)",
       "Bash(npx run build:*)",
-      "Bash(npm cache clean:*)"
+      "Bash(npm cache clean:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

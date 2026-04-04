@@ -6,7 +6,6 @@ import {
   CloseCircleOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
-  EyeOutlined,
   DownloadOutlined,
 } from '@ant-design/icons'
 import type { RootState } from '@/stores/store'
@@ -50,11 +49,12 @@ export function HistoryModal({ open, onClose }: HistoryModalProps) {
   const filteredHistory = useMemo(() => {
     if (selectedTab === 'all') return history
 
-    const statusMap: Record<typeof selectedTab, GenerationStatus> = {
-      all: 'success',
+    const statusMap: Record<string, GenerationStatus | undefined> = {
+      all: undefined,
       success: 'success',
       failed: 'failed',
       pending: 'pending',
+      generating: 'generating',
     }
 
     return history.filter(item => item.status === statusMap[selectedTab])

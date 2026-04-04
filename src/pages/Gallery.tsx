@@ -15,8 +15,9 @@ import { HistoryModal } from '@/components/HistoryModal'
 import { QueueDrawer } from '@/components/QueueDrawer'
 import { useImageGeneration } from '@/hooks/useImageGeneration'
 import { useBackgroundMusic } from '@/hooks/useBackgroundMusic'
+// STYLE_PRESETS 已移除 - 不再需要
 import { useCameraControl } from '@/hooks/useCameraControl'
-import { STYLE_PRESETS } from '@/services/imageGen'
+// STYLE_PRESETS 用于风格选项配置
 import './Gallery.css'
 
 const { TextArea } = Input
@@ -43,7 +44,7 @@ const BACKGROUND_MUSIC_SOURCES = [
 
 export function Gallery() {
   // 使用图片生成 Hook
-  const { queue, history, submitGeneration } = useImageGeneration()
+  const { queue, submitGeneration } = useImageGeneration()
 
   // 背景音乐 Hook
   const backgroundMusic = useBackgroundMusic(BACKGROUND_MUSIC_SOURCES)
