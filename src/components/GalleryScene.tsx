@@ -32,7 +32,7 @@ function CameraAnimator({
     moveSpeed: 0.1,
     rotationSpeed: 1,
     enableCollision: true,
-    collisionBounds: new THREE.Box3(new THREE.Vector3(-10, 0, -10), new THREE.Vector3(10, 10, 10)),
+    collisionBounds: new THREE.Box3(new THREE.Vector3(-15, 0, -20), new THREE.Vector3(15, 15, 20)),
     enableFootstep: false,
     ...config,
   })

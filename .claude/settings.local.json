@@ -21,7 +21,9 @@
       "Bash(npx run build:*)",
       "Bash(npm cache clean:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(powershell:*)"
     ]
   }
 }
