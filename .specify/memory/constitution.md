@@ -1,13 +1,15 @@
 <!--
 Sync Impact Report:
-Version: 0.0.0 → 1.0.0 → 1.0.1 → 1.1.0
+Version: 0.0.0 → 1.0.0 → 1.0.1 → 1.1.0 → 1.2.0
 Rationale:
   - v1.0.0: 首次制定项目宪法，确立核心开发原则
   - v1.0.1: 升级 Tailwind CSS 从 3.4.x 到 4.x
   - v1.1.0: 状态管理方案从 Zustand 改为 Redux Toolkit（采用最流行方案）
+  - v1.2.0: 更新目录结构约束，添加 types/ 和 services/ 目录以符合实际项目结构
 Modified Principles:
   - v1.0.1: I. 技术栈锁定（Tailwind CSS 版本更新）
   - v1.1.0: I. 技术栈锁定（状态管理从 Zustand 改为 Redux Toolkit）
+  - v1.2.0: V. 项目结构与目录约束（添加 types/ 和 services/ 目录）
 Added Sections: 文档与沟通规范（v1.0.0 添加）
 Removed Sections: 无
 Templates Status: ✅ 兼容
@@ -130,12 +132,14 @@ Follow-up TODOs: 无
 `src/` 目录下只允许以下子目录：
 - `components/` - React 组件
 - `pages/` - 页面组件
-- `stores/` - Zustand 状态管理
+- `stores/` - Redux 状态管理
 - `hooks/` - 自定义 React Hooks
 - `utils/` - 工具函数
 - `libs/` - 第三方库封装
 - `assets/` - 静态资源（图片、字体等）
 - `styles/` - 全局样式文件
+- `types/` - TypeScript 类型定义
+- `services/` - API 服务层
 
 **禁止行为**
 - 不得在 `src/` 下新增额外文件夹
@@ -304,4 +308,4 @@ Follow-up TODOs: 无
 
 ---
 
-**版本**: 1.1.0 | **批准日期**: 2026-01-18 | **最后修订**: 2026-01-24
+**版本**: 1.2.0 | **批准日期**: 2026-01-18 | **最后修订**: 2026-04-26

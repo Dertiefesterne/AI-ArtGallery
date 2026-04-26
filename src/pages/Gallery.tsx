@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ImageGeneration } from '@/types/image'
 import { Button, Drawer, Input, Select, Space, Card, Badge, Slider, Switch, message } from 'antd'
 import {
   PictureOutlined,
@@ -12,6 +13,7 @@ import {
 } from '@ant-design/icons'
 import { GalleryScene } from '@/components/GalleryScene'
 import { HistoryModal } from '@/components/HistoryModal'
+import { ArtworkDetailModal } from '@/components/ArtworkDetailModal'
 import { QueueDrawer } from '@/components/QueueDrawer'
 import { useImageGeneration } from '@/hooks/useImageGeneration'
 import { useBackgroundMusic } from '@/hooks/useBackgroundMusic'
@@ -19,6 +21,7 @@ import { useBackgroundMusic } from '@/hooks/useBackgroundMusic'
 import { useCameraControl } from '@/hooks/useCameraControl'
 // STYLE_PRESETS 用于风格选项配置
 import './Gallery.css'
+import { PerformanceStats } from '@/components/Stats'
 
 const { TextArea } = Input
 
@@ -44,7 +47,7 @@ const BACKGROUND_MUSIC_SOURCES = [
 
 export function Gallery() {
   // 使用图片生成 Hook
-  const { queue, submitGeneration } = useImageGeneration()
+  const { queue, submitGeneration, deleteGeneration } = useImageGeneration()
 
   // 背景音乐 Hook
   const backgroundMusic = useBackgroundMusic(BACKGROUND_MUSIC_SOURCES)
@@ -54,6 +57,10 @@ export function Gallery() {
 
   // AI 生成面板状态
   const [generatePanelOpen, setGeneratePanelOpen] = useState(false)
+
+  // 艺术品详情弹窗状态
+  const [artworkDetailOpen, setArtworkDetailOpen] = useState(false)
+  const [selectedArtwork, setSelectedArtwork] = useState<ImageGeneration | null>(null)
   const [prompt, setPrompt] = useState('')
   const [selectedStyle, setSelectedStyle] = useState<string>('realistic')
 
@@ -67,6 +74,12 @@ export function Gallery() {
 
   // 生成队列状态
   const [queueDrawerOpen, setQueueDrawerOpen] = useState(false)
+
+  // 处理艺术品点击
+  const handleArtworkClick = (artwork: ImageGeneration) => {
+    setSelectedArtwork(artwork)
+    setArtworkDetailOpen(true)
+  }
 
   // 处理音乐开关
   const handleMusicToggle = (enabled: boolean) => {
@@ -113,7 +126,7 @@ export function Gallery() {
     <div className="gallery-container">
       {/* ==================== 3D 画廊场景 ==================== */}
       <div className="gallery-scene">
-        <GalleryScene currentView={cameraControl.currentView} brightness={brightness} />
+        <GalleryScene currentView={cameraControl.currentView} brightness={brightness} onArtworkClick={handleArtworkClick} enableKeyboard={!generatePanelOpen} />
       </div>
 
       {/* ==================== 顶部控制栏 ==================== */}
@@ -348,12 +361,26 @@ export function Gallery() {
       {/* ==================== 生成历史 Modal ==================== */}
       <HistoryModal open={historyVisible} onClose={() => setHistoryVisible(false)} />
 
+      {/* 艺术品详情弹窗 */}
+      <ArtworkDetailModal
+        open={artworkDetailOpen}
+        artwork={selectedArtwork}
+        onClose={() => setArtworkDetailOpen(false)}
+        onDelete={(id) => {
+          deleteGeneration(id)
+          setArtworkDetailOpen(false)
+        }}
+      />
+
       {/* ==================== 生成队列详情抽屉 ==================== */}
       <QueueDrawer
         open={queueDrawerOpen}
         onClose={() => setQueueDrawerOpen(false)}
         count={queue.length}
       />
+
+      {/* FPS 监控 */}
+      <PerformanceStats />
     </div>
   )
 }

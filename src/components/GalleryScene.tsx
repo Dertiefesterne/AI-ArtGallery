@@ -8,10 +8,13 @@ import { Artwork } from './Artwork'
 import type { RootState } from '@/stores/store'
 import type { CameraView } from '@/hooks/useCameraControl'
 import type { KeyboardConfig } from '@/hooks/useKeyboardNavigation'
+import type { ImageGeneration } from '@/types/image'
 
 interface GallerySceneProps {
   currentView?: CameraView
   brightness?: number // 0-100 的亮度值
+  onArtworkClick?: (artwork: ImageGeneration) => void
+  enableKeyboard?: boolean // 是否启用键盘漫游，默认 true
 }
 
 /**
@@ -22,9 +25,11 @@ interface GallerySceneProps {
 function CameraAnimator({
   targetView,
   config,
+  enableKeyboard = true,
 }: {
   targetView: CameraView
   config?: KeyboardConfig
+  enableKeyboard?: boolean
 }) {
   const { camera } = useThree()
   const controlsRef = useRef<any>(null)
@@ -83,6 +88,12 @@ function CameraAnimator({
 
   // 键盘事件监听器
   useEffect(() => {
+    if (!enableKeyboard) {
+      // 禁用键盘时清空已按下的键
+      keysPressed.current.clear()
+      return
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       keysPressed.current.add(event.code)
     }
@@ -98,7 +109,7 @@ function CameraAnimator({
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [])
+  }, [enableKeyboard])
 
   // 每帧更新
   useFrame(() => {
@@ -195,7 +206,7 @@ function CameraAnimator({
 /**
  * 画廊 3D 场景组件
  */
-export function GalleryScene({ currentView, brightness = 50 }: GallerySceneProps) {
+export function GalleryScene({ currentView, brightness = 50, onArtworkClick, enableKeyboard = true }: GallerySceneProps) {
   // 默认视角
   const view: CameraView = currentView || {
     position: [0, 1.6, 12],
@@ -206,26 +217,27 @@ export function GalleryScene({ currentView, brightness = 50 }: GallerySceneProps
   // 计算光照强度系数（brightness 0-100 映射到 0.2-2.0）
   const intensityMultiplier = 0.2 + (brightness / 100) * 1.8
 
-  // 从 Redux 获取已成功生成的图片（最多 7 张）
-  const generatedImages = useSelector((state: RootState) =>
+  // 从 Redux 获取已成功生成的图片（最多 7 张）- 保留完整对象
+  const galleryItems = useSelector((state: RootState) =>
     state.images.history
       .filter(item => item.status === 'success' && item.imageUrl)
       .slice(0, 7)
-      .map(item => {
-        let url = item.imageUrl!
-        if (url.includes('s3.siliconflow.cn')) {
-          try {
-            const urlObj = new URL(url)
-            url = `/s3-proxy${urlObj.pathname}${urlObj.search}`
-          } catch (e) {
-            console.error('URL转换失败:', e)
-          }
-        }
-        return url
-      })
   )
 
-  console.log('[GalleryScene] 显示图片数量:', generatedImages.length)
+  // 转换 S3 URL 为代理 URL
+  const convertToProxyUrl = (url: string) => {
+    if (url.includes('s3.siliconflow.cn')) {
+      try {
+        const urlObj = new URL(url)
+        return '/s3-proxy' + urlObj.pathname + urlObj.search
+      } catch (e) {
+        return url
+      }
+    }
+    return url
+  }
+
+  console.log('[GalleryScene] 显示图片数量:', galleryItems.length)
 
   return (
     <div className="w-full h-screen">
@@ -262,43 +274,64 @@ export function GalleryScene({ currentView, brightness = 50 }: GallerySceneProps
         <pointLight position={[-5, 4, -5]} intensity={0.8 * intensityMultiplier} />
         <pointLight position={[0, 4, 0]} intensity={0.5 * intensityMultiplier} />
 
-        <CameraAnimator targetView={view} />
+        <CameraAnimator targetView={view} enableKeyboard={enableKeyboard} />
 
         <Room />
 
         <Artwork
           position={[-5.92, 3, -6]}
           rotation={[0, Math.PI / 2, 0]}
-          imageUrl={generatedImages[0]}
+          imageUrl={galleryItems[0] ? convertToProxyUrl(galleryItems[0].imageUrl!) : undefined}
+          prompt={galleryItems[0]?.prompt}
+          styleLabel={galleryItems[0]?.styleLabel}
+          onClick={() => galleryItems[0] && onArtworkClick?.(galleryItems[0])}
         />
         <Artwork
           position={[-5.92, 3, 0]}
           rotation={[0, Math.PI / 2, 0]}
-          imageUrl={generatedImages[1]}
+          imageUrl={galleryItems[1] ? convertToProxyUrl(galleryItems[1].imageUrl!) : undefined}
+          prompt={galleryItems[1]?.prompt}
+          styleLabel={galleryItems[1]?.styleLabel}
+          onClick={() => galleryItems[1] && onArtworkClick?.(galleryItems[1])}
         />
         <Artwork
           position={[-5.92, 3, 6]}
           rotation={[0, Math.PI / 2, 0]}
-          imageUrl={generatedImages[2]}
+          imageUrl={galleryItems[2] ? convertToProxyUrl(galleryItems[2].imageUrl!) : undefined}
+          prompt={galleryItems[2]?.prompt}
+          styleLabel={galleryItems[2]?.styleLabel}
+          onClick={() => galleryItems[2] && onArtworkClick?.(galleryItems[2])}
         />
 
         <Artwork
           position={[5.92, 3, -6]}
           rotation={[0, -Math.PI / 2, 0]}
-          imageUrl={generatedImages[3]}
+          imageUrl={galleryItems[3] ? convertToProxyUrl(galleryItems[3].imageUrl!) : undefined}
+          prompt={galleryItems[3]?.prompt}
+          styleLabel={galleryItems[3]?.styleLabel}
+          onClick={() => galleryItems[3] && onArtworkClick?.(galleryItems[3])}
         />
         <Artwork
           position={[5.92, 3, 0]}
           rotation={[0, -Math.PI / 2, 0]}
-          imageUrl={generatedImages[4]}
+          imageUrl={galleryItems[4] ? convertToProxyUrl(galleryItems[4].imageUrl!) : undefined}
+          prompt={galleryItems[4]?.prompt}
+          styleLabel={galleryItems[4]?.styleLabel}
+          onClick={() => galleryItems[4] && onArtworkClick?.(galleryItems[4])}
         />
         <Artwork
           position={[5.92, 3, 6]}
           rotation={[0, -Math.PI / 2, 0]}
-          imageUrl={generatedImages[5]}
+          imageUrl={galleryItems[5] ? convertToProxyUrl(galleryItems[5].imageUrl!) : undefined}
+          prompt={galleryItems[5]?.prompt}
+          styleLabel={galleryItems[5]?.styleLabel}
+          onClick={() => galleryItems[5] && onArtworkClick?.(galleryItems[5])}
         />
 
-        <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} imageUrl={generatedImages[6]} />
+        <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} imageUrl={galleryItems[6] ? convertToProxyUrl(galleryItems[6].imageUrl!) : undefined}
+          prompt={galleryItems[6]?.prompt}
+          styleLabel={galleryItems[6]?.styleLabel}
+          onClick={() => galleryItems[6] && onArtworkClick?.(galleryItems[6])} />
       </Canvas>
     </div>
   )
