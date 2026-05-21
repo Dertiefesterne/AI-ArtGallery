@@ -203,6 +203,24 @@ function CameraAnimator({
   )
 }
 
+// 从文件路径中提取书名
+const getArtworkTitle = (path: string): string => {
+  const match = path.match(/《(.+?)》/)
+  return match ? match[1] : path
+}
+
+// 画廊自带艺术品图片路径
+const ARTWORK_IMAGES = [
+  { path: '/artworks/包雪蕾 《冬煦——阿尔山不冻河的畅想》.jpg', author: '包雪蕾' },
+  { path: '/artworks/何馥君 《和谐的旋律》.jpg', author: '何馥君' },
+  { path: '/artworks/李夏夏 《万物同天》.jpg', author: '李夏夏' },
+  { path: '/artworks/卢贞 《春山可望》.jpg', author: '卢贞' },
+  { path: '/artworks/魏艳 《幸福专列》.jpg', author: '魏艳' },
+  { path: '/artworks/杨晶 《听花开的声音》.jpg', author: '杨晶' },
+  { path: '/artworks/詹斯斯 《向光而行》.jpg', author: '詹斯斯' },
+  { path: '/artworks/周文瑶 《时光来信》.jpg', author: '周文瑶' },
+]
+
 /**
  * 画廊 3D 场景组件
  */
@@ -253,26 +271,41 @@ export function GalleryScene({ currentView, brightness = 50, onArtworkClick, ena
       >
         <PerspectiveCamera makeDefault position={view.position} fov={90} />
 
-        <ambientLight intensity={1.2 * intensityMultiplier} />
+        {/* 环境光 - 明亮全局照明 */}
+        <ambientLight intensity={1.0 * intensityMultiplier} color="#faf8f5" />
 
+        {/* 主光源 - 模拟天窗自然光，不投射阴影 */}
         <directionalLight
-          position={[0, 10, 0]}
-          intensity={1.5 * intensityMultiplier}
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-camera-far={20}
-          shadow-camera-left={-10}
-          shadow-camera-right={10}
-          shadow-camera-top={10}
-          shadow-camera-bottom={-10}
-          shadow-bias={-0.0001}
-          shadow-normalBias={0.02}
+          position={[2, 12, 0]}
+          intensity={1.2 * intensityMultiplier}
+          color="#fffaf5"
         />
 
-        <pointLight position={[5, 4, 5]} intensity={0.8 * intensityMultiplier} />
-        <pointLight position={[-5, 4, -5]} intensity={0.8 * intensityMultiplier} />
-        <pointLight position={[0, 4, 0]} intensity={0.5 * intensityMultiplier} />
+        {/* 地板补光 - 照亮地板 */}
+        <pointLight position={[0, 0.5, 0]} intensity={0.6 * intensityMultiplier} color="#f5f0ea" />
+
+        {/* 左侧补光 */}
+        <pointLight position={[-4, 4, 0]} intensity={0.5 * intensityMultiplier} color="#f5f0ea" />
+
+        {/* 右侧补光 */}
+        <pointLight position={[4, 4, 0]} intensity={0.5 * intensityMultiplier} color="#f5f0ea" />
+
+        {/* 走廊两端补光 */}
+        <pointLight position={[0, 4, 8]} intensity={0.6 * intensityMultiplier} color="#fff8f0" />
+        <pointLight position={[0, 4, -8]} intensity={0.6 * intensityMultiplier} color="#fff8f0" />
+
+        {/* 艺术品射灯 - 左墙 - 从画上方照射 */}
+        <spotLight position={[-4, 7, -6]} target-position={[-5.92, 3, -6]} intensity={2 * intensityMultiplier} color="#fffaf0" angle={0.4} penumbra={0.8} />
+        <spotLight position={[-4, 7, 0]} target-position={[-5.92, 3, 0]} intensity={2 * intensityMultiplier} color="#fffaf0" angle={0.4} penumbra={0.8} />
+        <spotLight position={[-4, 7, 6]} target-position={[-5.92, 3, 6]} intensity={2 * intensityMultiplier} color="#fffaf0" angle={0.4} penumbra={0.8} />
+
+        {/* 艺术品射灯 - 右墙 - 从画上方照射 */}
+        <spotLight position={[4, 7, -6]} target-position={[5.92, 3, -6]} intensity={2 * intensityMultiplier} color="#fffaf0" angle={0.4} penumbra={0.8} />
+        <spotLight position={[4, 7, 0]} target-position={[5.92, 3, 0]} intensity={2 * intensityMultiplier} color="#fffaf0" angle={0.4} penumbra={0.8} />
+        <spotLight position={[4, 7, 6]} target-position={[5.92, 3, 6]} intensity={2 * intensityMultiplier} color="#fffaf0" angle={0.4} penumbra={0.8} />
+
+        {/* 尽头墙射灯 - 从画上方照射 */}
+        <spotLight position={[0, 7, -6]} target-position={[0, 3, -9.92]} intensity={2 * intensityMultiplier} color="#fffaf0" angle={0.4} penumbra={0.8} />
 
         <CameraAnimator targetView={view} enableKeyboard={enableKeyboard} />
 
@@ -281,57 +314,62 @@ export function GalleryScene({ currentView, brightness = 50, onArtworkClick, ena
         <Artwork
           position={[-5.92, 3, -6]}
           rotation={[0, Math.PI / 2, 0]}
-          imageUrl={galleryItems[0] ? convertToProxyUrl(galleryItems[0].imageUrl!) : undefined}
-          prompt={galleryItems[0]?.prompt}
-          styleLabel={galleryItems[0]?.styleLabel}
-          onClick={() => galleryItems[0] && onArtworkClick?.(galleryItems[0])}
+          imageUrl={ARTWORK_IMAGES[0].path}
+          prompt={getArtworkTitle(ARTWORK_IMAGES[0].path)}
+          styleLabel={ARTWORK_IMAGES[0].author}
+          onClick={() => {}}
         />
         <Artwork
           position={[-5.92, 3, 0]}
           rotation={[0, Math.PI / 2, 0]}
-          imageUrl={galleryItems[1] ? convertToProxyUrl(galleryItems[1].imageUrl!) : undefined}
-          prompt={galleryItems[1]?.prompt}
-          styleLabel={galleryItems[1]?.styleLabel}
-          onClick={() => galleryItems[1] && onArtworkClick?.(galleryItems[1])}
+          imageUrl={ARTWORK_IMAGES[1].path}
+          prompt={getArtworkTitle(ARTWORK_IMAGES[1].path)}
+          styleLabel={ARTWORK_IMAGES[1].author}
+          onClick={() => {}}
         />
         <Artwork
           position={[-5.92, 3, 6]}
           rotation={[0, Math.PI / 2, 0]}
-          imageUrl={galleryItems[2] ? convertToProxyUrl(galleryItems[2].imageUrl!) : undefined}
-          prompt={galleryItems[2]?.prompt}
-          styleLabel={galleryItems[2]?.styleLabel}
-          onClick={() => galleryItems[2] && onArtworkClick?.(galleryItems[2])}
+          imageUrl={ARTWORK_IMAGES[2].path}
+          prompt={getArtworkTitle(ARTWORK_IMAGES[2].path)}
+          styleLabel={ARTWORK_IMAGES[2].author}
+          onClick={() => {}}
         />
 
         <Artwork
           position={[5.92, 3, -6]}
           rotation={[0, -Math.PI / 2, 0]}
-          imageUrl={galleryItems[3] ? convertToProxyUrl(galleryItems[3].imageUrl!) : undefined}
-          prompt={galleryItems[3]?.prompt}
-          styleLabel={galleryItems[3]?.styleLabel}
-          onClick={() => galleryItems[3] && onArtworkClick?.(galleryItems[3])}
+          imageUrl={ARTWORK_IMAGES[3].path}
+          prompt={getArtworkTitle(ARTWORK_IMAGES[3].path)}
+          styleLabel={ARTWORK_IMAGES[3].author}
+          onClick={() => {}}
         />
         <Artwork
           position={[5.92, 3, 0]}
           rotation={[0, -Math.PI / 2, 0]}
-          imageUrl={galleryItems[4] ? convertToProxyUrl(galleryItems[4].imageUrl!) : undefined}
-          prompt={galleryItems[4]?.prompt}
-          styleLabel={galleryItems[4]?.styleLabel}
-          onClick={() => galleryItems[4] && onArtworkClick?.(galleryItems[4])}
+          imageUrl={ARTWORK_IMAGES[4].path}
+          prompt={getArtworkTitle(ARTWORK_IMAGES[4].path)}
+          styleLabel={ARTWORK_IMAGES[4].author}
+          onClick={() => {}}
         />
         <Artwork
           position={[5.92, 3, 6]}
           rotation={[0, -Math.PI / 2, 0]}
-          imageUrl={galleryItems[5] ? convertToProxyUrl(galleryItems[5].imageUrl!) : undefined}
-          prompt={galleryItems[5]?.prompt}
-          styleLabel={galleryItems[5]?.styleLabel}
-          onClick={() => galleryItems[5] && onArtworkClick?.(galleryItems[5])}
+          imageUrl={ARTWORK_IMAGES[5].path}
+          prompt={getArtworkTitle(ARTWORK_IMAGES[5].path)}
+          styleLabel={ARTWORK_IMAGES[5].author}
+          onClick={() => {}}
         />
 
-        <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} imageUrl={galleryItems[6] ? convertToProxyUrl(galleryItems[6].imageUrl!) : undefined}
-          prompt={galleryItems[6]?.prompt}
-          styleLabel={galleryItems[6]?.styleLabel}
-          onClick={() => galleryItems[6] && onArtworkClick?.(galleryItems[6])} />
+        <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} imageUrl={ARTWORK_IMAGES[6].path}
+          prompt={getArtworkTitle(ARTWORK_IMAGES[6].path)}
+          styleLabel={ARTWORK_IMAGES[6].author}
+          onClick={() => {}} />
+
+        <Artwork position={[0, 3, -9.92]} rotation={[0, 0, 0]} imageUrl={ARTWORK_IMAGES[7].path}
+          prompt={getArtworkTitle(ARTWORK_IMAGES[7].path)}
+          styleLabel={ARTWORK_IMAGES[7].author}
+          onClick={() => {}} />
       </Canvas>
     </div>
   )

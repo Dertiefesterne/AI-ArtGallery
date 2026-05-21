@@ -12,10 +12,15 @@ interface ArtworkProps {
   onClick?: () => void
 }
 
+// 画框内框尺寸
+const FRAME_INNER_WIDTH = 1.3
+const FRAME_INNER_HEIGHT = 1.8
+
 export function Artwork({ position, rotation, imageUrl, prompt, styleLabel, onClick }: ArtworkProps) {
   const groupRef = useRef<THREE.Group>(null)
   const [texture, setTexture] = useState<THREE.Texture | null>(null)
   const [isHovered, setIsHovered] = useState(false)
+  const [imageAspect, setImageAspect] = useState<number>(1)
 
   useEffect(() => {
     if (!imageUrl) {
@@ -29,7 +34,18 @@ export function Artwork({ position, rotation, imageUrl, prompt, styleLabel, onCl
       imageUrl,
       loadedTexture => {
         loadedTexture.colorSpace = THREE.SRGBColorSpace
+        // 设置贴图参数：裁剪而非压缩
+        loadedTexture.wrapS = THREE.ClampToEdgeWrapping
+        loadedTexture.wrapT = THREE.ClampToEdgeWrapping
+        loadedTexture.minFilter = THREE.LinearFilter
+        loadedTexture.magFilter = THREE.LinearFilter
         setTexture(loadedTexture)
+
+        // 获取图片原始比例
+        const img = loadedTexture.image
+        if (img && img.naturalWidth) {
+          setImageAspect(img.naturalWidth / img.naturalHeight)
+        }
       },
       undefined,
       error => {
@@ -42,6 +58,23 @@ export function Artwork({ position, rotation, imageUrl, prompt, styleLabel, onCl
   const frameMaterial = <meshStandardMaterial color="#d4af37" roughness={0.3} metalness={0.8} />
 
   const trimMaterial = <meshStandardMaterial color="#f4d03f" roughness={0.2} metalness={0.9} />
+
+  // 计算贴图变换：确保图片铺满画框，裁剪多余部分
+  const frameAspect = FRAME_INNER_WIDTH / FRAME_INNER_HEIGHT
+  const textureOffset = [0, 0]
+  const textureRepeat = [1, 1]
+
+  if (imageAspect > frameAspect) {
+    // 图片比画框宽：裁剪左右两边
+    const scale = imageAspect / frameAspect
+    textureRepeat[0] = 1 / scale
+    textureOffset[0] = (1 - textureRepeat[0]) / 2
+  } else {
+    // 图片比画框高：裁剪上下
+    const scale = frameAspect / imageAspect
+    textureRepeat[1] = 1 / scale
+    textureOffset[1] = (1 - textureRepeat[1]) / 2
+  }
 
   return (
     <group
@@ -70,11 +103,20 @@ export function Artwork({ position, rotation, imageUrl, prompt, styleLabel, onCl
         <meshStandardMaterial color="#2a2a2a" roughness={0.9} />
       </mesh>
 
-      {/* 图片区域 */}
-      <mesh position={[0, 0, 0.12]}>
-        <boxGeometry args={[1.3, 1.8, 0.01]} />
+      {/* 图片区域 - 使用 planeGeometry */}
+      <mesh position={[0, 0, 0.115]}>
+        <planeGeometry args={[FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT]} />
         {texture ? (
-          <meshBasicMaterial map={texture} color="#ffffff" />
+          <meshBasicMaterial
+            map={texture}
+            onUpdate={self => {
+              if (self.map) {
+                self.map.offset.set(textureOffset[0], textureOffset[1])
+                self.map.repeat.set(textureRepeat[0], textureRepeat[1])
+                self.map.needsUpdate = true
+              }
+            }}
+          />
         ) : (
           <meshStandardMaterial color="#4a5568" roughness={0.8} />
         )}
@@ -125,7 +167,7 @@ export function Artwork({ position, rotation, imageUrl, prompt, styleLabel, onCl
         <Html position={[0, 2.5, 0]} center style={{ pointerEvents: 'none' }}>
           <div className="artwork-tooltip">
             {styleLabel && <span className="artwork-tooltip-style">{styleLabel}</span>}
-            {prompt && <span className="artwork-tooltip-prompt">{prompt.slice(0, 30)}{prompt.length > 30 ? '...' : ''}</span>}
+            {prompt && <span className="artwork-tooltip-prompt">《{prompt}》</span>}
           </div>
         </Html>
       )}
