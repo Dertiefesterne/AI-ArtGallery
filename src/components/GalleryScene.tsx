@@ -1,13 +1,16 @@
 import { useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import { PerspectiveCamera } from '@react-three/drei'
 import { useSelector } from 'react-redux'
 import * as THREE from 'three'
+// @ts-ignore - three examples 不在 types 中
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js'
+// @ts-ignore
+const PointerLockControlsAny = PointerLockControls as any
 import { Room } from './Room'
 import { Artwork } from './Artwork'
 import type { RootState } from '@/stores/store'
 import type { CameraView } from '@/hooks/useCameraControl'
-import type { KeyboardConfig } from '@/hooks/useKeyboardNavigation'
 import type { ImageGeneration } from '@/types/image'
 
 interface GallerySceneProps {
@@ -17,83 +20,151 @@ interface GallerySceneProps {
   enableKeyboard?: boolean // 是否启用键盘漫游，默认 true
 }
 
-/**
- * 相机动画控制器组件
- * 只在视角变化时执行平滑过渡，之后允许用户自由控制
- * 同时支持键盘漫游
- */
-function CameraAnimator({
-  targetView,
-  config,
-  enableKeyboard = true,
-}: {
-  targetView: CameraView
-  config?: KeyboardConfig
-  enableKeyboard?: boolean
-}) {
-  const { camera } = useThree()
+// 第一人称相机控制器 Hook
+function useFirstPersonControls() {
+  const { camera, gl } = useThree()
   const controlsRef = useRef<any>(null)
-  const moveConfig = useRef<KeyboardConfig>({
-    moveSpeed: 0.1,
-    rotationSpeed: 1,
-    enableCollision: true,
-    collisionBounds: new THREE.Box3(new THREE.Vector3(-15, 0, -20), new THREE.Vector3(15, 15, 20)),
-    enableFootstep: false,
-    ...config,
-  })
   const keysPressed = useRef<Set<string>>(new Set())
-  const moveVector = useRef(new THREE.Vector3())
+  const isLocked = useRef(false)
+  const euler = useRef(new THREE.Euler(0, 0, 0, 'YXZ'))
+  const autoUnlockTimer = useRef<number | null>(null)
 
-  // 动画状态
-  const [isAnimating, setIsAnimating] = useState(false)
-  const animationProgress = useRef(0)
+  // 固定眼睛高度
+  const EYE_HEIGHT = 1.8
 
-  // 起始和目标位置
-  const startPosition = useRef(new THREE.Vector3())
-  const startTarget = useRef(new THREE.Vector3())
-  const targetPosition = useRef(new THREE.Vector3(...targetView.position))
-  const targetLookAt = useRef(new THREE.Vector3(...targetView.target))
+  // 碰撞边界
+  const collisionBounds = useRef(
+    new THREE.Box3(new THREE.Vector3(-15, 0, -20), new THREE.Vector3(15, 10, 20))
+  )
 
-  // 记录上一次的视角 id，用于检测变化
-  const lastViewIdRef = useRef<number>(-1)
+  // 移动速度
+  const moveSpeed = 0.08
 
-  // 标记是否已完成首次初始化
-  const isInitializedRef = useRef(false)
+  // 鼠标灵敏度
+  const mouseSensitivity = 0.002
 
-  // 当视角变化时，启动动画
+  // 自动退出锁定定时器
+  const AUTO_UNLOCK_DELAY = 2000 // 2秒后自动退出锁定
+
+  const clearAutoUnlockTimer = () => {
+    if (autoUnlockTimer.current !== null) {
+      window.clearTimeout(autoUnlockTimer.current)
+      autoUnlockTimer.current = null
+    }
+  }
+
+  const startAutoUnlockTimer = () => {
+    clearAutoUnlockTimer()
+    autoUnlockTimer.current = window.setTimeout(() => {
+      if (controlsRef.current && isLocked.current) {
+        controlsRef.current.unlock()
+      }
+    }, AUTO_UNLOCK_DELAY)
+  }
+
+  // 初始化
   useEffect(() => {
-    if (lastViewIdRef.current !== targetView.id) {
-      const isFirstRender = lastViewIdRef.current === -1
+    // 创建 PointerLockControls
+    const controls = new PointerLockControlsAny(camera, gl.domElement)
+    controlsRef.current = controls
 
-      lastViewIdRef.current = targetView.id
+    controls.addEventListener('lock', () => {
+      isLocked.current = true
+    })
 
-      // 更新目标位置
-      targetPosition.current.set(...targetView.position)
-      targetLookAt.current.set(...targetView.target)
+    controls.addEventListener('unlock', () => {
+      isLocked.current = false
+    })
 
-      if (isFirstRender) {
-        // 首次渲染：标记需要初始化
-        isInitializedRef.current = false
-      } else {
-        // 非首次：启动平滑过渡动画
-        startPosition.current.copy(camera.position)
-        if (controlsRef.current) {
-          startTarget.current.copy(controlsRef.current.target)
-        }
-        setIsAnimating(true)
-        animationProgress.current = 0
+    return () => {
+      controls.dispose()
+    }
+  }, [camera, gl])
+
+  // 鼠标移动处理（用于未锁定时的视角旋转）
+  useEffect(() => {
+    const canvas = gl.domElement
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isLocked.current) return // 锁定后由 PointerLockControls 处理
+
+      // 鼠标拖拽旋转
+      if (event.buttons === 1) { // 左键拖拽
+        const movementX = event.movementX || 0
+        const movementY = event.movementY || 0
+
+        euler.current.y -= movementX * mouseSensitivity
+        euler.current.x -= movementY * mouseSensitivity
+
+        // 限制垂直旋转角度
+        euler.current.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, euler.current.x))
+
+        camera.quaternion.setFromEuler(euler.current)
+
+        // 用户在旋转，启动自动退出定时器
+        startAutoUnlockTimer()
       }
     }
-  }, [targetView, camera])
 
-  // 键盘事件监听器
+    canvas.addEventListener('mousemove', handleMouseMove)
+    return () => {
+      canvas.removeEventListener('mousemove', handleMouseMove)
+      clearAutoUnlockTimer()
+    }
+  }, [camera, gl])
+
+  // 点击画布锁定鼠标
   useEffect(() => {
-    if (!enableKeyboard) {
-      // 禁用键盘时清空已按下的键
-      keysPressed.current.clear()
-      return
+    const canvas = gl.domElement
+
+    const handleClick = () => {
+      if (!isLocked.current && controlsRef.current) {
+        controlsRef.current.lock()
+      }
     }
 
+    canvas.addEventListener('click', handleClick)
+    return () => {
+      canvas.removeEventListener('click', handleClick)
+    }
+  }, [gl])
+
+  // 滚轮控制前进/后退
+  useEffect(() => {
+    const canvas = gl.domElement
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault()
+
+      // 获取相机朝向（水平方向）
+      const forward = new THREE.Vector3()
+      camera.getWorldDirection(forward)
+      forward.y = 0
+      forward.normalize()
+
+      // 滚轮向上（往前），滚轮向下（往后）
+      const scrollSpeed = 0.3
+      const scrollAmount = event.deltaY > 0 ? scrollSpeed : -scrollSpeed
+
+      const moveVector = forward.clone().multiplyScalar(scrollAmount)
+
+      // 检查碰撞
+      const newPosition = camera.position.clone().add(moveVector)
+      newPosition.y = EYE_HEIGHT
+
+      if (collisionBounds.current.containsPoint(newPosition)) {
+        camera.position.add(moveVector)
+      }
+    }
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false })
+    return () => {
+      canvas.removeEventListener('wheel', handleWheel)
+    }
+  }, [camera, gl])
+
+  // 键盘事件监听
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       keysPressed.current.add(event.code)
     }
@@ -109,98 +180,134 @@ function CameraAnimator({
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [enableKeyboard])
+  }, [])
 
   // 每帧更新
   useFrame(() => {
-    // 首次初始化：直接设置相机位置和目标
-    if (!isInitializedRef.current && controlsRef.current) {
+    if (!controlsRef.current) return
+
+    // 键盘视角控制（始终可用）
+    if (keysPressed.current.size > 0) {
+      // W/S 仰/俯视角
+      if (keysPressed.current.has('KeyW') || keysPressed.current.has('ArrowUp')) {
+        euler.current.x += 0.01
+        euler.current.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, euler.current.x))
+        camera.quaternion.setFromEuler(euler.current)
+        startAutoUnlockTimer()
+      }
+      if (keysPressed.current.has('KeyS') || keysPressed.current.has('ArrowDown')) {
+        euler.current.x -= 0.01
+        euler.current.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, euler.current.x))
+        camera.quaternion.setFromEuler(euler.current)
+        startAutoUnlockTimer()
+      }
+
+      // A/D 左右平移
+      if (keysPressed.current.has('KeyA') || keysPressed.current.has('ArrowLeft')) {
+        const moveVector = new THREE.Vector3()
+        const forward = new THREE.Vector3()
+        camera.getWorldDirection(forward)
+        forward.y = 0
+        forward.normalize()
+        const right = new THREE.Vector3()
+        right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize()
+        moveVector.add(right.clone().multiplyScalar(-moveSpeed))
+
+        const newPosition = camera.position.clone().add(moveVector)
+        newPosition.y = EYE_HEIGHT
+        if (collisionBounds.current.containsPoint(newPosition)) {
+          camera.position.add(moveVector)
+        }
+      }
+      if (keysPressed.current.has('KeyD') || keysPressed.current.has('ArrowRight')) {
+        const moveVector = new THREE.Vector3()
+        const forward = new THREE.Vector3()
+        camera.getWorldDirection(forward)
+        forward.y = 0
+        forward.normalize()
+        const right = new THREE.Vector3()
+        right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize()
+        moveVector.add(right.clone().multiplyScalar(moveSpeed))
+
+        const newPosition = camera.position.clone().add(moveVector)
+        newPosition.y = EYE_HEIGHT
+        if (collisionBounds.current.containsPoint(newPosition)) {
+          camera.position.add(moveVector)
+        }
+      }
+    }
+
+    // 保持固定高度
+    camera.position.y = EYE_HEIGHT
+  })
+
+  return controlsRef
+}
+
+/**
+ * 第一人称相机控制组件
+ */
+function FirstPersonController({
+  enableKeyboard: _enableKeyboard = true,
+}: {
+  enableKeyboard?: boolean
+}) {
+  useFirstPersonControls()
+  return null
+}
+
+// 保留视角动画功能（用于初始加载和视角切换）
+function CameraAnimator({
+  targetView,
+}: {
+  targetView: CameraView
+}) {
+  const { camera } = useThree()
+  const lastViewIdRef = useRef<number>(-1)
+  const isInitializedRef = useRef(false)
+  const animationProgress = useRef(0)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const startPosition = useRef(new THREE.Vector3())
+  const targetPosition = useRef(new THREE.Vector3(...targetView.position))
+
+  useEffect(() => {
+    if (lastViewIdRef.current !== targetView.id) {
+      const isFirstRender = lastViewIdRef.current === -1
+      lastViewIdRef.current = targetView.id
+
+      targetPosition.current.set(...targetView.position)
+
+      if (!isFirstRender) {
+        startPosition.current.copy(camera.position)
+        setIsAnimating(true)
+        animationProgress.current = 0
+      }
+    }
+  }, [targetView, camera])
+
+  useFrame(() => {
+    // 首次初始化：直接设置相机位置
+    if (!isInitializedRef.current) {
       camera.position.set(...targetView.position)
-      controlsRef.current.target.set(...targetView.target)
-      controlsRef.current.update()
       isInitializedRef.current = true
       return
     }
 
-    // 键盘移动（仅在非动画状态时)
-    if (!isAnimating && keysPressed.current.size > 0 && controlsRef.current) {
-      const speed = moveConfig.current.moveSpeed
-      moveVector.current.set(0, 0, 0)
-
-      // 获取相机朝向（水平方向）
-      const forward = new THREE.Vector3()
-      camera.getWorldDirection(forward)
-      forward.y = 0 // 保持在水平面上
-      forward.normalize()
-
-      // 计算右方向
-      const right = new THREE.Vector3()
-      right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize()
-
-      // 根据按键计算移动方向
-      if (keysPressed.current.has('KeyW') || keysPressed.current.has('ArrowUp')) {
-        moveVector.current.add(forward.clone().multiplyScalar(speed))
-      }
-      if (keysPressed.current.has('KeyS') || keysPressed.current.has('ArrowDown')) {
-        moveVector.current.add(forward.clone().multiplyScalar(-speed))
-      }
-      if (keysPressed.current.has('KeyA') || keysPressed.current.has('ArrowLeft')) {
-        moveVector.current.add(right.clone().multiplyScalar(-speed))
-      }
-      if (keysPressed.current.has('KeyD') || keysPressed.current.has('ArrowRight')) {
-        moveVector.current.add(right.clone().multiplyScalar(speed))
-      }
-
-      // 检查碰撞
-      if (moveVector.current.length() > 0.01 && moveConfig.current.enableCollision) {
-        const newPosition = camera.position.clone().add(moveVector.current)
-        if (!moveConfig.current.collisionBounds.containsPoint(newPosition)) {
-          moveVector.current.set(0, 0, 0)
-        }
-      }
-
-      // 应用移动
-      if (moveVector.current.length() > 0.01) {
-        camera.position.add(moveVector.current)
-        controlsRef.current.target.add(moveVector.current)
-        controlsRef.current.update()
-      }
-    }
-    // 动画中
-    if (isAnimating && controlsRef.current) {
+    // 动画过渡
+    if (isAnimating) {
       animationProgress.current += 0.03
       const t = Math.min(animationProgress.current, 1)
-      const easeT = 1 - Math.pow(1 - t, 3) // easeOutCubic
+      const easeT = 1 - Math.pow(1 - t, 3)
 
-      // 插值相机位置
       camera.position.lerpVectors(startPosition.current, targetPosition.current, easeT)
 
-      // 插值目标点
-      controlsRef.current.target.lerpVectors(startTarget.current, targetLookAt.current, easeT)
-
-      // 更新控制器
-      controlsRef.current.update()
-
-      // 动画完成
       if (t >= 1) {
         setIsAnimating(false)
       }
     }
   })
 
-  return (
-    <OrbitControls
-      ref={controlsRef}
-      makeDefault
-      enablePan={true}
-      enableZoom={true}
-      enableRotate={true}
-      minDistance={3}
-      maxDistance={30}
-      maxPolarAngle={Math.PI / 2}
-      minPolarAngle={0}
-    />
-  )
+  return null
 }
 
 // 从文件路径中提取书名
@@ -224,7 +331,7 @@ const ARTWORK_IMAGES = [
 /**
  * 画廊 3D 场景组件
  */
-export function GalleryScene({ currentView, brightness = 50, onArtworkClick, enableKeyboard = true }: GallerySceneProps) {
+export function GalleryScene({ currentView, brightness = 50, onArtworkClick: _onArtworkClick, enableKeyboard = true }: GallerySceneProps) {
   // 默认视角
   const view: CameraView = currentView || {
     position: [0, 1.6, 12],
@@ -241,19 +348,6 @@ export function GalleryScene({ currentView, brightness = 50, onArtworkClick, ena
       .filter(item => item.status === 'success' && item.imageUrl)
       .slice(0, 7)
   )
-
-  // 转换 S3 URL 为代理 URL
-  const convertToProxyUrl = (url: string) => {
-    if (url.includes('s3.siliconflow.cn')) {
-      try {
-        const urlObj = new URL(url)
-        return '/s3-proxy' + urlObj.pathname + urlObj.search
-      } catch (e) {
-        return url
-      }
-    }
-    return url
-  }
 
   console.log('[GalleryScene] 显示图片数量:', galleryItems.length)
 
@@ -307,7 +401,8 @@ export function GalleryScene({ currentView, brightness = 50, onArtworkClick, ena
         {/* 尽头墙射灯 - 从画上方照射 */}
         <spotLight position={[0, 7, -6]} target-position={[0, 3, -9.92]} intensity={2 * intensityMultiplier} color="#fffaf0" angle={0.4} penumbra={0.8} />
 
-        <CameraAnimator targetView={view} enableKeyboard={enableKeyboard} />
+        <FirstPersonController enableKeyboard={enableKeyboard} />
+        <CameraAnimator targetView={view} />
 
         <Room />
 
