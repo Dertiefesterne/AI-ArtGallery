@@ -155,7 +155,6 @@ export function Gallery() {
             <Button
               type="primary"
               icon={<PictureOutlined />}
-              size="large"
               onClick={() => setGeneratePanelOpen(true)}
             >
               AI 生成

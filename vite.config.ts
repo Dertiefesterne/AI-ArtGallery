@@ -22,8 +22,8 @@ export default defineConfig({
       '/s3-proxy': {
         target: 'https://s3.siliconflow.cn',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/s3-proxy/, ''),
-        secure: false,  // 忽略SSL证书验证
+        rewrite: path => path.replace(/^\/s3-proxy/, ''),
+        secure: false, // 忽略SSL证书验证
       },
     },
   },

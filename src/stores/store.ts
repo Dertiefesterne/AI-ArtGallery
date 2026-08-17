@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import imageReducer from './imageSlice'
+import authReducer from './authSlice'
 
 export const store = configureStore({
   reducer: {
     images: imageReducer,
+    auth: authReducer,
   },
   // 开发环境启用 Redux DevTools
   devTools: import.meta.env.DEV,
