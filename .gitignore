@@ -22,3 +22,17 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ---- 环境变量与密钥（切勿提交） ----
+.env
+.env.local
+.env.*.local
+
+# ---- 数据库（SQLite，本地文件） ----
+*.db
+*.db-journal
+server/dev.db
+
+# ---- 后端运行时产物 ----
+server/node_modules
+server/uploads
