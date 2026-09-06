@@ -17,7 +17,7 @@ export async function register(
   password: string,
   name?: string
 ): Promise<AuthResult> {
-  const { data } = await client.post<AuthResult>('/api/auth/register', {
+  const { data } = await client.post<AuthResult>('/auth/register', {
     email,
     password,
     name,
@@ -26,11 +26,11 @@ export async function register(
 }
 
 export async function login(email: string, password: string): Promise<AuthResult> {
-  const { data } = await client.post<AuthResult>('/api/auth/login', { email, password })
+  const { data } = await client.post<AuthResult>('/auth/login', { email, password })
   return data
 }
 
 export async function getMe(): Promise<{ user: AuthUser }> {
-  const { data } = await client.get<{ user: AuthUser }>('/api/auth/me')
+  const { data } = await client.get<{ user: AuthUser }>('/auth/me')
   return data
 }

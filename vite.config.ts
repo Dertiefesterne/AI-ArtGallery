@@ -18,6 +18,12 @@ export default defineConfig({
     port: 3000,
     open: true,
     proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        // 如果后端没有 /api 前缀，可以去掉
+        // rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       // 代理 SiliconFlow S3 图片请求，绕过 CORS
       '/s3-proxy': {
         target: 'https://s3.siliconflow.cn',

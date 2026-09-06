@@ -36,3 +36,7 @@ server/dev.db
 # ---- 后端运行时产物 ----
 server/node_modules
 server/uploads
+
+# ---- 本地工作记忆（WorkBuddy 私有，勿提交） ----
+.workbuddy/
+

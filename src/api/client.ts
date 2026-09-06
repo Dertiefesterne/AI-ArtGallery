@@ -2,9 +2,9 @@ import axios from 'axios'
 import { store } from '../stores/store'
 import { logout } from '../stores/authSlice'
 
-// 后端地址：默认 http://localhost:3001，可用 .env.local 的 VITE_API_BASE 覆盖
+// 后端地址用 .env.local 的 VITE_API_BASE 覆盖
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:3001',
+  baseURL: import.meta.env.VITE_API_BASE || '/api',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: false,
 })
